@@ -1,3 +1,5 @@
 .venv/
 __pycache__/
 *.pyc
+.SmartGuard-Fron/node_modules/*
+.SmartGuard-Fron/dist/*
