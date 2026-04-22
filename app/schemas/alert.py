@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -32,3 +34,7 @@ class AlertRead(AlertBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AlertStatusUpdate(BaseModel):
+    status: Literal["pending", "processing", "resolved"]

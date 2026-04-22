@@ -9,7 +9,7 @@ defineProps({
 
 <template>
   <el-row :gutter="16" class="stats-row">
-    <el-col v-for="item in stats" :key="item.title" :xs="24" :sm="12" :lg="6">
+    <el-col v-for="item in stats" :key="item.title" :xs="24" :sm="12" :lg="8" :xl="4">
       <div class="stat-card">
         <div class="stat-title">{{ item.title }}</div>
         <div class="stat-value-wrap">

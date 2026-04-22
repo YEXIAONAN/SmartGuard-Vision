@@ -18,7 +18,7 @@ SmartGuard-Vision/
 │   ├── schemas/                    # 请求/响应模型
 │   ├── services/                   # 业务逻辑
 │   └── utils/                      # 工具函数
-├── smartguard-vision-frontend/     # 前端项目（Vue 3）
+├── SmartGuard-Vision-Fron/         # 前端项目（Vue 3）
 ├── pyproject.toml                  # Python 项目配置
 ├── uv.lock                         # uv 锁定文件
 ├── .gitignore
@@ -85,7 +85,7 @@ uv run uvicorn app.main:app --reload
 进入前端目录：
 
 ```bash
-cd smartguard-vision-frontend
+cd SmartGuard-Vision-Fron
 ```
 
 安装依赖：
@@ -115,7 +115,7 @@ uv run uvicorn app.main:app --reload
 ### 终端 2：启动前端
 
 ```bash
-cd SmartGuard-Vision/smartguard-vision-frontend
+cd SmartGuard-Vision/SmartGuard-Vision-Fron
 npm install
 npm run dev
 ```
@@ -167,7 +167,7 @@ npm run dev
 本项目采用“后端主工程 + 前端子目录”结构：
 
 * 根目录负责后端服务、模型推理、接口设计与数据存储
-* `smartguard-vision-frontend/` 负责前端页面、告警展示与可视化大屏
+* `SmartGuard-Vision-Fron/` 负责前端页面、告警展示与可视化大屏
 
 推荐开发顺序：
 
@@ -185,6 +185,12 @@ npm run dev
 * 风险分级预警
 * 平台联动处置
 * 可视化监控大屏
+
+目前已补齐：
+
+* 大屏接入后端真实数据，不再依赖前端本地 mock
+* 首页总览已聚合设备状态、风险分布、区域风险、停充监测和最近告警
+* 告警支持基础处置流转：待处理、处理中、已处理
 
 ---
 

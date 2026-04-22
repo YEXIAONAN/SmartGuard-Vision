@@ -1,17 +1,10 @@
 <script setup>
-const props = defineProps({
+defineProps({
   monitor: {
     type: Object,
     required: true,
   },
 })
-
-const tagTypeMap = {
-  飞线充电: 'danger',
-  温升关注: 'warning',
-  越线停放: 'primary',
-  人工复核中: 'info',
-}
 </script>
 
 <template>
@@ -42,12 +35,7 @@ const tagTypeMap = {
       </div>
 
       <div class="tag-group">
-        <el-tag
-          v-for="tag in monitor.tags"
-          :key="tag"
-          :type="tagTypeMap[tag] || 'info'"
-          effect="plain"
-        >
+        <el-tag v-for="tag in monitor.tags" :key="tag" effect="plain">
           {{ tag }}
         </el-tag>
       </div>
@@ -154,7 +142,7 @@ const tagTypeMap = {
 
 .info-item {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
   gap: 12px;
   padding: 10px 0;
   border-bottom: 1px dashed #dde7f2;

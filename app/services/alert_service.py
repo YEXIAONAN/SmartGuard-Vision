@@ -32,3 +32,19 @@ def create_alert(db: Session, payload: AlertCreate):
     db.add(alert)
     db.flush()
     return alert
+
+
+def get_alert_by_id(db: Session, alert_id: int):
+    stmt = select(Alert).where(Alert.id == alert_id)
+    return db.scalar(stmt)
+
+
+def update_alert_status(db: Session, alert_id: int, status: str):
+    alert = get_alert_by_id(db, alert_id)
+    if not alert:
+        return None
+
+    alert.status = status
+    db.commit()
+    db.refresh(alert)
+    return alert

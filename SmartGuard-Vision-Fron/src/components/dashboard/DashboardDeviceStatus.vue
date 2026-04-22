@@ -8,7 +8,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="device-list">
+  <div v-if="devices.length" class="device-list">
     <div v-for="item in devices" :key="item.name" class="device-item">
       <div class="device-top">
         <span>{{ item.name }}</span>
@@ -22,6 +22,7 @@ defineProps({
       />
     </div>
   </div>
+  <el-empty v-else description="暂无设备状态数据" />
 </template>
 
 <style scoped>

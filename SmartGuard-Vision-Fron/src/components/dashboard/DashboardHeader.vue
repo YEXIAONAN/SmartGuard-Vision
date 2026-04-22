@@ -12,6 +12,10 @@ defineProps({
     type: String,
     required: true,
   },
+  generatedAt: {
+    type: String,
+    required: true,
+  },
   systemStatus: {
     type: String,
     required: true,
@@ -34,6 +38,10 @@ defineProps({
       <div class="header-metric">
         <span class="metric-label">当前时间</span>
         <span class="metric-value">{{ currentTime }}</span>
+      </div>
+      <div class="header-metric">
+        <span class="metric-label">数据更新时间</span>
+        <span class="metric-value">{{ generatedAt }}</span>
       </div>
       <div class="header-metric">
         <span class="metric-label">系统状态</span>
@@ -80,7 +88,7 @@ defineProps({
 }
 
 .header-metric {
-  min-width: 180px;
+  min-width: 190px;
   padding: 10px 14px;
   border: 1px solid var(--sg-border-light);
   border-radius: 10px;
@@ -98,7 +106,7 @@ defineProps({
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #20354d;
 }

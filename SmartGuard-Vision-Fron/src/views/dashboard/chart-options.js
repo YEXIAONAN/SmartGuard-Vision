@@ -41,7 +41,7 @@ export const createParkingRecognitionOption = (payload) => ({
     type: 'category',
     data: payload.labels,
     axisLine: { lineStyle: { color: '#c7d3e3' } },
-    axisLabel: { color: '#5b6b7f' },
+    axisLabel: { color: '#5b6b7f', interval: 0, rotate: payload.labels.length > 4 ? 18 : 0 },
   },
   yAxis: {
     type: 'value',
