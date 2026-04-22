@@ -10,34 +10,28 @@ defineProps({
 <template>
   <div class="monitor-layout">
     <div class="monitor-screen">
-      <div class="screen-badge">{{ monitor.screenLabel }}</div>
-      <div
-        v-for="overlay in monitor.overlays"
-        :key="overlay.text"
-        class="screen-overlay"
-        :class="overlay.className"
-      >
-        {{ overlay.text }}
+      <div class="screen-head">
+        <span class="screen-title">{{ monitor.screenLabel }}</span>
+        <span class="screen-point">点位编码：{{ monitor.pointCode }}</span>
+      </div>
+      <div class="screen-canvas">
+        <div v-for="overlay in monitor.overlays" :key="overlay.text" class="screen-overlay" :class="overlay.className">
+          {{ overlay.text }}
+        </div>
       </div>
       <div class="screen-footer">
-        <span>点位编码：{{ monitor.pointCode }}</span>
         <span>采集状态：{{ monitor.captureStatus }}</span>
+        <div class="screen-tags">
+          <el-tag v-for="tag in monitor.tags" :key="tag" effect="plain" size="small">{{ tag }}</el-tag>
+        </div>
       </div>
     </div>
 
-    <div class="monitor-side">
-      <div class="info-group">
-        <div class="info-group-title">识别结果信息</div>
-        <div v-for="item in monitor.recognitionList" :key="item.label" class="info-item">
-          <span class="info-label">{{ item.label }}</span>
-          <span class="info-value">{{ item.value }}</span>
-        </div>
-      </div>
-
-      <div class="tag-group">
-        <el-tag v-for="tag in monitor.tags" :key="tag" effect="plain">
-          {{ tag }}
-        </el-tag>
+    <div class="monitor-info">
+      <div class="info-title">识别联动信息</div>
+      <div v-for="item in monitor.recognitionList" :key="item.label" class="info-row">
+        <span class="info-label">{{ item.label }}</span>
+        <span class="info-value">{{ item.value }}</span>
       </div>
     </div>
   </div>
@@ -46,148 +40,148 @@ defineProps({
 <style scoped>
 .monitor-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+  gap: 12px;
 }
 
 .monitor-screen {
-  position: relative;
-  min-height: 430px;
+  border: 1px solid #cfd8e4;
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--sg-border);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(38, 73, 121, 0.18), rgba(19, 41, 78, 0.34)),
-    linear-gradient(135deg, #c6d8f2 0%, #f1f6fc 42%, #d5e2f3 100%);
+  background: #0f1823;
 }
 
-.monitor-screen::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
-  background-size: 36px 36px;
-  opacity: 0.45;
+.screen-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #2a3848;
+  background: #132233;
 }
 
-.screen-badge {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 1;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(20, 54, 104, 0.86);
-  color: #fff;
+.screen-title {
   font-size: 13px;
+  font-weight: 600;
+  color: #d7e5f6;
+}
+
+.screen-point {
+  font-size: 12px;
+  color: #9eb2c7;
+}
+
+.screen-canvas {
+  position: relative;
+  min-height: 320px;
+  background:
+    linear-gradient(180deg, rgba(22, 33, 47, 0.8), rgba(12, 18, 27, 0.9)),
+    repeating-linear-gradient(0deg, rgba(62, 84, 107, 0.14), rgba(62, 84, 107, 0.14) 1px, transparent 1px, transparent 36px),
+    repeating-linear-gradient(90deg, rgba(62, 84, 107, 0.14), rgba(62, 84, 107, 0.14) 1px, transparent 1px, transparent 36px);
 }
 
 .screen-overlay {
   position: absolute;
   z-index: 1;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
 }
 
 .overlay-main {
-  top: 108px;
-  right: 82px;
-  background: rgba(215, 89, 89, 0.92);
+  top: 78px;
+  right: 72px;
+  background: rgba(174, 78, 78, 0.92);
 }
 
 .overlay-secondary {
-  bottom: 104px;
-  left: 74px;
-  background: rgba(242, 169, 59, 0.92);
+  bottom: 88px;
+  left: 66px;
+  background: rgba(169, 123, 53, 0.92);
 }
 
 .screen-footer {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1;
   display: flex;
   justify-content: space-between;
-  padding: 14px 18px;
-  background: rgba(15, 37, 68, 0.78);
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.92);
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #2a3848;
+  background: #132233;
+  color: #c5d6e7;
+  font-size: 12px;
 }
 
-.monitor-side {
+.screen-tags {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
-.info-group {
-  padding: 16px;
-  border: 1px solid var(--sg-border-light);
-  border-radius: 12px;
+.screen-tags :deep(.el-tag) {
+  color: #aec2d8;
+  border-color: #35516c;
+  background: rgba(36, 58, 82, 0.35);
+}
+
+.monitor-info {
+  border: 1px solid var(--sg-border);
+  border-radius: 10px;
+  padding: 10px 12px;
   background: var(--sg-bg-soft);
 }
 
-.info-group-title {
-  margin-bottom: 14px;
-  font-size: 15px;
+.info-title {
+  margin-bottom: 8px;
+  font-size: 14px;
   font-weight: 600;
-  color: #25405f;
+  color: #2c425a;
 }
 
-.info-item {
+.info-row {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px dashed #dde7f2;
+  grid-template-columns: 88px 1fr;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px dashed #d6dfeb;
 }
 
-.info-item:last-child {
-  padding-bottom: 0;
+.info-row:last-child {
   border-bottom: none;
 }
 
 .info-label {
-  font-size: 13px;
-  color: var(--sg-text-secondary);
+  font-size: 12px;
+  color: var(--sg-text-muted);
 }
 
 .info-value {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--sg-text-main);
 }
 
-.tag-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-@media (max-width: 1366px) {
+@media (max-width: 1200px) {
   .monitor-layout {
     grid-template-columns: 1fr;
-  }
-
-  .monitor-screen {
-    min-height: 360px;
   }
 }
 
 @media (max-width: 768px) {
-  .monitor-screen {
-    min-height: 300px;
+  .screen-canvas {
+    min-height: 240px;
   }
 
   .screen-footer {
     flex-direction: column;
-    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .screen-tags {
+    justify-content: flex-start;
   }
 }
 </style>

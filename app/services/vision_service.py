@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import or_, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.vision_record import VisionRecord
@@ -14,16 +14,13 @@ HIGH_RISK_LEVELS = {"high", "高风险"}
 MEDIUM_RISK_LEVELS = {"medium", "中风险"}
 
 
-def list_vision_records(
-    db: Session,
+def apply_vision_filters(
+    stmt: Select,
     *,
     keyword: str | None = None,
     event_type: str | None = None,
     risk_level: str | None = None,
-    limit: int = 50,
 ):
-    stmt = select(VisionRecord).order_by(VisionRecord.reported_at.desc()).limit(limit)
-
     if keyword:
         fuzzy_keyword = f"%{keyword.strip()}%"
         stmt = stmt.where(
@@ -37,8 +34,62 @@ def list_vision_records(
         stmt = stmt.where(VisionRecord.event_type == event_type)
     if risk_level:
         stmt = stmt.where(VisionRecord.risk_level == risk_level)
+    return stmt
 
-    return db.scalars(stmt).all()
+
+def list_vision_records(
+    db: Session,
+    *,
+    keyword: str | None = None,
+    event_type: str | None = None,
+    risk_level: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+):
+    base_stmt = apply_vision_filters(
+        select(VisionRecord),
+        keyword=keyword,
+        event_type=event_type,
+        risk_level=risk_level,
+    )
+    total_stmt = apply_vision_filters(
+        select(func.count()).select_from(VisionRecord),
+        keyword=keyword,
+        event_type=event_type,
+        risk_level=risk_level,
+    )
+
+    records_stmt = (
+        base_stmt.order_by(VisionRecord.reported_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+
+    records = db.scalars(records_stmt).all()
+    total = db.scalar(total_stmt) or 0
+    return records, total
+
+
+def get_vision_filter_options(
+    db: Session,
+    *,
+    keyword: str | None = None,
+    event_type: str | None = None,
+    risk_level: str | None = None,
+):
+    option_stmt = apply_vision_filters(
+        select(VisionRecord),
+        keyword=keyword,
+        event_type=event_type,
+        risk_level=risk_level,
+    )
+    records = db.scalars(option_stmt).all()
+    event_types = sorted({item.event_type for item in records if item.event_type})
+    risk_levels = sorted({item.risk_level for item in records if item.risk_level})
+    return {
+        "event_types": event_types,
+        "risk_levels": risk_levels,
+    }
 
 
 def get_vision_record_by_id(db: Session, record_id: int):

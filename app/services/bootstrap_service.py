@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from app.core.database import SessionLocal
 from app.models.alert import Alert
+from app.models.alert_action import AlertActionLog
 from app.models.device import Device
 from app.models.sensor_record import SensorRecord
 from app.models.vision_record import VisionRecord
@@ -153,4 +154,29 @@ def seed_initial_data():
         db.add_all(vision_records)
         db.add_all(sensor_records)
         db.add_all(alerts)
+        db.flush()
+
+        action_logs = [
+            AlertActionLog(
+                alert_id=alerts[1].id,
+                action_type="status_update",
+                from_status="pending",
+                to_status="processing",
+                handled_by="值班员-王敏",
+                handling_note="已通知现场巡查人员赶赴宿舍区充电棚复核。",
+                handled_at=now - timedelta(minutes=4),
+                created_at=now - timedelta(minutes=4),
+            ),
+            AlertActionLog(
+                alert_id=alerts[2].id,
+                action_type="status_update",
+                from_status="processing",
+                to_status="resolved",
+                handled_by="管理员-李强",
+                handling_note="现场完成移车，消防通道恢复畅通。",
+                handled_at=now - timedelta(days=1, hours=1, minutes=30),
+                created_at=now - timedelta(days=1, hours=1, minutes=30),
+            ),
+        ]
+        db.add_all(action_logs)
         db.commit()

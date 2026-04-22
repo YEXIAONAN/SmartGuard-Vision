@@ -16,9 +16,7 @@ export const useDashboardStore = defineStore('dashboard', {
   },
   actions: {
     async fetchDashboard({ silent = false } = {}) {
-      if (!silent) {
-        this.loading = true
-      }
+      if (!silent) this.loading = true
 
       try {
         const [health, overview] = await Promise.all([
@@ -28,7 +26,7 @@ export const useDashboardStore = defineStore('dashboard', {
         this.$patch(adaptDashboardData({ health, overview }))
       } catch (error) {
         this.systemStatus = '连接异常'
-        this.error = error instanceof Error ? error.message : '大屏数据加载失败'
+        this.error = error instanceof Error ? error.message : '首页态势数据加载失败'
         console.error(error)
       } finally {
         this.loading = false

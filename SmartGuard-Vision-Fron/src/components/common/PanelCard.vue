@@ -43,8 +43,8 @@ const showHeader = computed(() => props.title || props.extra || slots.header)
 }
 
 :deep(.el-card__header) {
-  padding: 16px 18px 10px;
-  border-bottom: none;
+  padding: 10px 14px;
+  border-bottom: 1px solid #edf2f8;
 }
 
 .panel-head {
@@ -55,13 +55,13 @@ const showHeader = computed(() => props.title || props.extra || slots.header)
 }
 
 .panel-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--sg-text-main);
+  color: #2a3d52;
 }
 
 .panel-extra {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--sg-text-muted);
 }
 </style>

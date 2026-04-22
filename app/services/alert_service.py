@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.alert import Alert
+from app.models.alert_action import AlertActionLog
 from app.schemas.alert import AlertCreate
 
 
@@ -42,6 +43,11 @@ def get_alert_by_id(db: Session, alert_id: int):
     return db.scalar(stmt)
 
 
+def list_alert_action_logs(db: Session, alert_id: int):
+    stmt = select(AlertActionLog).where(AlertActionLog.alert_id == alert_id).order_by(AlertActionLog.created_at.desc())
+    return db.scalars(stmt).all()
+
+
 def update_alert_status(
     db: Session,
     alert_id: int,
@@ -54,6 +60,7 @@ def update_alert_status(
     if not alert:
         return None
 
+    previous_status = alert.status
     alert.status = status
     if handled_by is not None:
         alert.handled_by = handled_by.strip() or None
@@ -70,6 +77,17 @@ def update_alert_status(
         alert.handled_at = handled_at
     elif status == "resolved":
         alert.handled_at = datetime.now()
+
+    action_log = AlertActionLog(
+        alert_id=alert.id,
+        action_type="status_update",
+        from_status=previous_status,
+        to_status=alert.status,
+        handled_by=alert.handled_by,
+        handling_note=alert.handling_note,
+        handled_at=handled_at or datetime.now(),
+    )
+    db.add(action_log)
 
     db.commit()
     db.refresh(alert)

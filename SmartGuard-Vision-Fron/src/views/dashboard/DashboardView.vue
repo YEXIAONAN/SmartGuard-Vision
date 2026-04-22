@@ -1,14 +1,13 @@
 <script setup>
 import { ElMessage } from 'element-plus'
-import { computed, reactive, ref, onBeforeUnmount, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import PanelCard from '../../components/common/PanelCard.vue'
 import DashboardAlertList from '../../components/dashboard/DashboardAlertList.vue'
 import DashboardChartPanel from '../../components/dashboard/DashboardChartPanel.vue'
 import DashboardDeviceStatus from '../../components/dashboard/DashboardDeviceStatus.vue'
-import DashboardHeader from '../../components/dashboard/DashboardHeader.vue'
 import DashboardMonitor from '../../components/dashboard/DashboardMonitor.vue'
 import DashboardStats from '../../components/dashboard/DashboardStats.vue'
-import { useClock } from '../../composables/useClock'
+import { dashboardApi } from '../../services/api'
 import { useDashboardStore } from '../../stores/dashboard'
 import {
   createAlertTrendOption,
@@ -19,15 +18,28 @@ import {
 } from './chart-options'
 
 const dashboardStore = useDashboardStore()
-const { currentTime } = useClock()
 
 const handlingDialogVisible = ref(false)
 const handlingTarget = ref(null)
+const actionLogsLoading = ref(false)
+const actionLogs = ref([])
+const handlingFormRef = ref(null)
 const handlingForm = reactive({
   status: 'processing',
   handledBy: '',
   handlingNote: '',
 })
+
+const formRules = {
+  handledBy: [
+    { required: true, message: '处理人不能为空', trigger: 'blur' },
+    { min: 2, max: 32, message: '处理人长度需在 2-32 个字符之间', trigger: 'blur' },
+  ],
+  handlingNote: [
+    { required: true, message: '处理备注不能为空', trigger: 'blur' },
+    { min: 5, max: 300, message: '处理备注长度需在 5-300 个字符之间', trigger: 'blur' },
+  ],
+}
 
 const riskTrendOption = computed(() => createRiskTrendOption(dashboardStore.riskTrend))
 const eventDistributionOption = computed(() =>
@@ -36,13 +48,32 @@ const eventDistributionOption = computed(() =>
 const riskLevelOption = computed(() => createRiskLevelOption(dashboardStore.riskLevel))
 const areaRiskOption = computed(() => createAreaRiskOption(dashboardStore.areaRisk))
 const alertTrendOption = computed(() => createAlertTrendOption(dashboardStore.alertTrend))
+const currentAlert = computed(() => dashboardStore.alerts[0] || null)
+const riskTagClass = (levelKey) =>
+  `sg-status-tag-risk-${['high', 'medium', 'low'].includes(levelKey) ? levelKey : 'low'}`
+const stateTagClass = (statusKey) =>
+  `sg-status-tag-state-${['pending', 'processing', 'resolved'].includes(statusKey) ? statusKey : 'pending'}`
 
-const openHandlingDialog = ({ alert, nextStatus }) => {
+const loadActionLogs = async (alertId) => {
+  actionLogsLoading.value = true
+  actionLogs.value = []
+  try {
+    const logs = await dashboardApi.getAlertActions(alertId)
+    actionLogs.value = logs
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '处置审计日志加载失败')
+  } finally {
+    actionLogsLoading.value = false
+  }
+}
+
+const openHandlingDialog = async ({ alert, nextStatus }) => {
   handlingTarget.value = alert
   handlingForm.status = nextStatus
   handlingForm.handledBy = alert.handledBy || ''
   handlingForm.handlingNote = alert.handlingNote || ''
   handlingDialogVisible.value = true
+  await loadActionLogs(alert.id)
 }
 
 const closeHandlingDialog = () => {
@@ -51,21 +82,21 @@ const closeHandlingDialog = () => {
   handlingForm.status = 'processing'
   handlingForm.handledBy = ''
   handlingForm.handlingNote = ''
+  actionLogs.value = []
+  handlingFormRef.value?.clearValidate?.()
 }
 
 const submitAlertHandling = async () => {
-  if (!handlingTarget.value) return
-  if (!handlingForm.handledBy.trim()) {
-    ElMessage.warning('请填写处理人')
-    return
-  }
+  if (!handlingTarget.value || !handlingFormRef.value) return
+
+  const valid = await handlingFormRef.value.validate().catch(() => false)
+  if (!valid) return
 
   const success = await dashboardStore.updateAlertStatus(handlingTarget.value.id, {
     status: handlingForm.status,
     handled_by: handlingForm.handledBy,
     handling_note: handlingForm.handlingNote,
   })
-
   if (!success) return
 
   ElMessage.success(handlingForm.status === 'processing' ? '告警已转入处理中' : '告警已标记为已处理')
@@ -73,11 +104,9 @@ const submitAlertHandling = async () => {
 }
 
 onMounted(() => {
-  dashboardStore.startAutoRefresh()
-})
-
-onBeforeUnmount(() => {
-  dashboardStore.stopAutoRefresh()
+  if (!dashboardStore.initialized) {
+    void dashboardStore.fetchDashboard()
+  }
 })
 </script>
 
@@ -85,110 +114,153 @@ onBeforeUnmount(() => {
   <div
     v-loading="dashboardStore.loading && !dashboardStore.initialized"
     class="page-container dashboard-page"
-    element-loading-text="正在同步大屏数据..."
+    element-loading-text="正在同步平台态势数据..."
   >
     <el-alert
       v-if="dashboardStore.error"
       class="sync-alert"
-      title="大屏数据同步失败"
+      title="态势数据同步失败"
       :description="dashboardStore.error"
       type="warning"
       :closable="false"
       show-icon
     />
 
-    <PanelCard body-padding="18px 22px">
-      <DashboardHeader
-        :project-name="dashboardStore.project.name"
-        :subtitle="dashboardStore.project.subtitle"
-        :current-time="currentTime"
-        :generated-at="dashboardStore.generatedAt"
-        :system-status="dashboardStore.systemStatus"
-        :online-summary="dashboardStore.onlineSummary"
-      />
-    </PanelCard>
+    <section class="dashboard-layer">
+      <DashboardStats :stats="dashboardStore.stats" />
+    </section>
 
-    <DashboardStats :stats="dashboardStore.stats" />
-
-    <el-row :gutter="16" class="content-row">
-      <el-col :xs="24" :lg="6">
-        <div class="stack-column">
-          <DashboardChartPanel
-            title="告警趋势图"
-            extra="近 7 天"
-            :option="riskTrendOption"
-            :height="250"
-          />
-          <DashboardChartPanel
-            title="风险事件分布"
-            extra="按事件类型统计"
-            :option="eventDistributionOption"
-            :height="250"
-          />
-        </div>
-      </el-col>
-
-      <el-col :xs="24" :lg="12">
-        <PanelCard :title="dashboardStore.monitor.title" :extra="dashboardStore.monitor.channel">
+    <section class="dashboard-layer risk-center">
+      <div class="risk-main">
+        <PanelCard
+          :title="dashboardStore.monitor.title || '实时风险联动画面'"
+          :extra="dashboardStore.monitor.channel || '实时识别通道'"
+        >
           <DashboardMonitor :monitor="dashboardStore.monitor" />
         </PanelCard>
-      </el-col>
+      </div>
 
-      <el-col :xs="24" :lg="6">
-        <div class="stack-column">
-          <PanelCard title="实时告警列表" extra="支持联动处置">
-            <DashboardAlertList
-              :alerts="dashboardStore.alerts"
-              :updating-alert-id="dashboardStore.updatingAlertId"
-              @handle-alert="openHandlingDialog"
-            />
-          </PanelCard>
-          <PanelCard title="设备在线状态" extra="按设备类型统计">
-            <DashboardDeviceStatus :devices="dashboardStore.deviceStatusList" />
-          </PanelCard>
-          <DashboardChartPanel
-            title="风险等级分布"
-            extra="当前告警数据"
-            :option="riskLevelOption"
-            :height="220"
+      <div class="risk-side">
+        <PanelCard title="当前风险详情" extra="联动处置状态">
+          <div v-if="currentAlert" class="risk-detail">
+            <div class="risk-detail-row">
+              <span class="risk-label">告警时间</span>
+              <span class="risk-value">{{ currentAlert.time }}</span>
+            </div>
+            <div class="risk-detail-row">
+              <span class="risk-label">监测点位</span>
+              <span class="risk-value">{{ currentAlert.place }}</span>
+            </div>
+            <div class="risk-detail-row">
+              <span class="risk-label">风险等级</span>
+              <span class="sg-status-tag" :class="riskTagClass(currentAlert.levelKey)">
+                {{ currentAlert.level }}
+              </span>
+            </div>
+            <div class="risk-detail-row">
+              <span class="risk-label">处理状态</span>
+              <span class="sg-status-tag" :class="stateTagClass(currentAlert.rawStatus)">
+                {{ currentAlert.status }}
+              </span>
+            </div>
+            <div class="risk-detail-row">
+              <span class="risk-label">风险描述</span>
+              <span class="risk-value">{{ currentAlert.detail }}</span>
+            </div>
+            <div class="risk-detail-row">
+              <span class="risk-label">处理人</span>
+              <span class="risk-value">{{ currentAlert.handledBy || '--' }}</span>
+            </div>
+            <div class="risk-detail-row">
+              <span class="risk-label">处置时间</span>
+              <span class="risk-value">{{ currentAlert.handledAt || '--' }}</span>
+            </div>
+            <div class="risk-detail-row">
+              <span class="risk-label">处理备注</span>
+              <span class="risk-value">{{ currentAlert.handlingNote || '--' }}</span>
+            </div>
+          </div>
+          <el-empty v-else description="暂无实时风险事件" />
+        </PanelCard>
+
+        <PanelCard title="实时告警列表" extra="支持联动处置">
+          <DashboardAlertList
+            :alerts="dashboardStore.alerts"
+            :updating-alert-id="dashboardStore.updatingAlertId"
+            @handle-alert="openHandlingDialog"
           />
-        </div>
-      </el-col>
-    </el-row>
+        </PanelCard>
+      </div>
+    </section>
 
-    <el-row :gutter="16" class="analysis-row">
-      <el-col :xs="24" :lg="12">
+    <section class="dashboard-layer trend-center">
+      <div class="trend-main">
+        <el-row :gutter="14">
+          <el-col :xs="24" :xl="12">
+            <DashboardChartPanel
+              title="近 7 日告警走势"
+              extra="总量变化"
+              :option="riskTrendOption"
+              :height="270"
+            />
+          </el-col>
+          <el-col :xs="24" :xl="12">
+            <DashboardChartPanel
+              title="风险等级分布"
+              extra="当前告警组成"
+              :option="riskLevelOption"
+              :height="270"
+            />
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="14" class="trend-row">
+          <el-col :xs="24" :xl="12">
+            <DashboardChartPanel
+              title="区域风险热力排行"
+              extra="重点区域排查"
+              :option="areaRiskOption"
+              :height="286"
+            />
+          </el-col>
+          <el-col :xs="24" :xl="12">
+            <DashboardChartPanel
+              title="告警总量与高风险对比"
+              extra="辅助研判"
+              :option="alertTrendOption"
+              :height="286"
+            />
+          </el-col>
+        </el-row>
+      </div>
+
+      <div class="trend-side">
         <DashboardChartPanel
-          title="区域风险热力分布"
-          extra="重点区域排序"
-          :option="areaRiskOption"
-          :height="300"
+          title="感知事件分类统计"
+          extra="识别来源分布"
+          :option="eventDistributionOption"
+          :height="260"
         />
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <DashboardChartPanel
-          title="告警趋势分析"
-          extra="总量与高风险事件"
-          :option="alertTrendOption"
-          :height="300"
-        />
-      </el-col>
-    </el-row>
+        <PanelCard title="设备在线状态" extra="按设备类型统计">
+          <DashboardDeviceStatus :devices="dashboardStore.deviceStatusList" />
+        </PanelCard>
+      </div>
+    </section>
 
     <el-dialog
       v-model="handlingDialogVisible"
-      :title="handlingForm.status === 'processing' ? '转入处理中' : '标记已处理'"
-      width="520px"
+      :title="handlingForm.status === 'processing' ? '转入处理中' : '标记为已处理'"
+      width="620px"
       @closed="closeHandlingDialog"
     >
-      <el-form label-width="88px">
+      <el-form ref="handlingFormRef" :model="handlingForm" :rules="formRules" label-width="88px">
         <el-form-item label="告警位置">
           <div>{{ handlingTarget?.place || '--' }}</div>
         </el-form-item>
-        <el-form-item label="处理人" required>
+        <el-form-item label="处理人" prop="handledBy">
           <el-input v-model="handlingForm.handledBy" placeholder="请输入处理人姓名或岗位" />
         </el-form-item>
-        <el-form-item label="处理备注">
+        <el-form-item label="处理备注" prop="handlingNote">
           <el-input
             v-model="handlingForm.handlingNote"
             type="textarea"
@@ -197,6 +269,27 @@ onBeforeUnmount(() => {
           />
         </el-form-item>
       </el-form>
+
+      <div class="audit-log-block">
+        <div class="audit-log-title">操作审计列表</div>
+        <el-skeleton v-if="actionLogsLoading" :rows="3" animated />
+        <el-empty v-else-if="!actionLogs.length" description="暂无审计记录" />
+        <el-timeline v-else>
+          <el-timeline-item
+            v-for="log in actionLogs"
+            :key="log.id"
+            :timestamp="log.created_at"
+            placement="top"
+          >
+            <div class="audit-log-item">
+              <div>状态：{{ log.from_status || '--' }} -> {{ log.to_status || '--' }}</div>
+              <div>处理人：{{ log.handled_by || '--' }}</div>
+              <div>备注：{{ log.handling_note || '--' }}</div>
+            </div>
+          </el-timeline-item>
+        </el-timeline>
+      </div>
+
       <template #footer>
         <el-button @click="closeHandlingDialog">取消</el-button>
         <el-button
@@ -212,12 +305,91 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.content-row,
-.analysis-row {
-  margin-top: 16px;
+.sync-alert {
+  margin-bottom: 14px;
 }
 
-.sync-alert {
-  margin-bottom: 16px;
+.dashboard-layer + .dashboard-layer {
+  margin-top: 14px;
+}
+
+.risk-center {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(340px, 5fr);
+  gap: 14px;
+}
+
+.risk-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.risk-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.risk-detail-row {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.risk-label {
+  font-size: 12px;
+  color: var(--sg-text-muted);
+}
+
+.risk-value {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sg-text-main);
+}
+
+.trend-center {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(320px, 5fr);
+  gap: 14px;
+}
+
+.trend-row {
+  margin-top: 14px;
+}
+
+.trend-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.audit-log-block {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e7edf5;
+}
+
+.audit-log-title {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sg-text-main);
+}
+
+.audit-log-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--sg-text-secondary);
+}
+
+@media (max-width: 1400px) {
+  .risk-center,
+  .trend-center {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

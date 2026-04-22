@@ -10,7 +10,8 @@ body,
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #eef5fc 0%, #f5f8fc 38%, #f2f6fb 100%);
+  background:
+    linear-gradient(180deg, var(--sg-bg-page) 0%, var(--sg-bg-page-alt) 100%);
   color: var(--sg-text-main);
 }
 
@@ -20,21 +21,86 @@ a {
 }
 
 .page-container {
-  padding: 20px;
+  padding: 16px 20px 20px;
 }
 
 .stack-column {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .chart-box {
   width: 100%;
 }
 
+.sg-status-tag {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.sg-status-tag-risk-high {
+  color: #8f2f2f;
+  background: #fbecec;
+}
+
+.sg-status-tag-risk-medium {
+  color: #7f5b21;
+  background: #fcf4e5;
+}
+
+.sg-status-tag-risk-low {
+  color: #2b4b74;
+  background: #edf3fa;
+}
+
+.sg-status-tag-state-pending {
+  color: #8f2f2f;
+  background: #fbecec;
+}
+
+.sg-status-tag-state-processing {
+  color: #7f5b21;
+  background: #fcf4e5;
+}
+
+.sg-status-tag-state-resolved {
+  color: #2f6b4a;
+  background: #eaf6ef;
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--sg-color-primary);
+  --el-button-border-color: var(--sg-color-primary);
+  --el-button-hover-bg-color: #3c5f8f;
+  --el-button-hover-border-color: #3c5f8f;
+}
+
+.el-tag {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.el-table {
+  --el-table-border-color: var(--sg-border-light);
+  --el-table-header-bg-color: #f4f7fb;
+  --el-table-row-hover-bg-color: #f8fbff;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: #344458;
+}
+
+.el-tabs__item {
+  font-weight: 600;
+}
+
 @media (max-width: 992px) {
   .page-container {
-    padding: 14px;
+    padding: 12px 14px 16px;
   }
 }

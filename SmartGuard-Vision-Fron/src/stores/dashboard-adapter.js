@@ -1,12 +1,12 @@
 const RISK_COLORS = {
-  high: '#e35d5d',
-  medium: '#f2a93b',
-  low: '#4c8bf5',
-  other: '#9dc2ff',
+  high: '#b65252',
+  medium: '#b47a35',
+  low: '#4f6f98',
+  other: '#8ea2ba',
 }
 
-const EVENT_COLORS = ['#4c8bf5', '#7aa9ff', '#f3b24d', '#f08c6a', '#d96e6e', '#8a8ff0']
-const AREA_COLORS = ['#d85c5c', '#eb8b56', '#f3b24d', '#72a6ff', '#4c8bf5', '#7f95ff']
+const EVENT_COLORS = ['#4f6f98', '#7b93b2', '#b47a35', '#c58965', '#b75f5f', '#7989ac']
+const AREA_COLORS = ['#b75f5f', '#c58965', '#b47a35', '#7b93b2', '#4f6f98', '#7989ac']
 
 export const createDefaultDashboardState = () => ({
   project: {
@@ -119,40 +119,52 @@ const formatAlertStatus = (value) => {
 
 const buildStats = (stats) => [
   {
-    title: '接入设备数',
+    title: '在线设备数',
     value: String(stats.device_count ?? 0),
     unit: '台',
     note: `在线 ${stats.online_device_count ?? 0} 台，离线 ${stats.offline_device_count ?? 0} 台`,
+    tone: 'neutral',
+    size: 'normal',
   },
   {
     title: '今日告警数',
     value: String(stats.today_alert_count ?? 0),
     unit: '条',
     note: `累计告警 ${stats.alert_count ?? 0} 条`,
+    tone: 'warning',
+    size: 'key',
   },
   {
     title: '高风险事件',
     value: String(stats.high_risk_alert_count ?? 0),
     unit: '条',
     note: '视觉识别与传感异常联动触发',
+    tone: 'danger',
+    size: 'key',
   },
   {
     title: '充电监测点位',
     value: String(stats.charging_device_count ?? 0),
     unit: '处',
     note: `异常充电事件 ${stats.abnormal_charging_event_count ?? 0} 条`,
+    tone: 'neutral',
+    size: 'normal',
   },
   {
     title: '温升异常数',
     value: String(stats.over_temperature_event_count ?? 0),
     unit: '条',
     note: '重点关注高温和烟雾联动预警',
+    tone: 'warning',
+    size: 'normal',
   },
   {
     title: '感知记录数',
     value: String((stats.vision_record_count ?? 0) + (stats.sensor_record_count ?? 0)),
     unit: '条',
     note: `视觉 ${stats.vision_record_count ?? 0} 条，传感 ${stats.sensor_record_count ?? 0} 条`,
+    tone: 'neutral',
+    size: 'normal',
   },
 ]
 

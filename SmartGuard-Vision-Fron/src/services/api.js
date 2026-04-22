@@ -56,14 +56,23 @@ export const dashboardApi = {
       body: JSON.stringify(payload),
     })
   },
+  getAlertActions(alertId) {
+    return request(`/api/alerts/${alertId}/actions`)
+  },
   getVisionRecords(params = {}) {
     return request('/api/vision', { params })
+  },
+  getVisionFilterOptions(params = {}) {
+    return request('/api/vision/filter-options', { params })
   },
   getVisionRecordDetail(recordId) {
     return request(`/api/vision/${recordId}`)
   },
   getSensorRecords(params = {}) {
     return request('/api/sensors', { params })
+  },
+  getSensorFilterOptions(params = {}) {
+    return request('/api/sensors/filter-options', { params })
   },
   getSensorRecordDetail(recordId) {
     return request(`/api/sensors/${recordId}`)

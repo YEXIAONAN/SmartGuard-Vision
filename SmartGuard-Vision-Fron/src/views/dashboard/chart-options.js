@@ -1,19 +1,19 @@
-import * as echarts from 'echarts'
-
 export const createRiskTrendOption = (payload) => ({
+  animation: false,
   tooltip: { trigger: 'axis' },
-  grid: { left: 28, right: 18, top: 28, bottom: 24 },
+  grid: { left: 28, right: 12, top: 24, bottom: 24 },
   xAxis: {
     type: 'category',
     boundaryGap: false,
     data: payload.labels,
-    axisLine: { lineStyle: { color: '#c7d3e3' } },
-    axisLabel: { color: '#5b6b7f' },
+    axisLine: { lineStyle: { color: '#ccd6e3' } },
+    axisLabel: { color: '#5a6d82' },
   },
   yAxis: {
     type: 'value',
-    splitLine: { lineStyle: { color: '#e7eef6' } },
-    axisLabel: { color: '#5b6b7f' },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: '#e9eef5' } },
+    axisLabel: { color: '#5a6d82' },
   },
   series: [
     {
@@ -21,61 +21,58 @@ export const createRiskTrendOption = (payload) => ({
       type: 'line',
       smooth: true,
       symbol: 'circle',
-      symbolSize: 8,
-      lineStyle: { width: 3, color: '#2f6bff' },
-      itemStyle: { color: '#2f6bff' },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(47, 107, 255, 0.24)' },
-          { offset: 1, color: 'rgba(47, 107, 255, 0.03)' },
-        ]),
-      },
+      symbolSize: 6,
+      lineStyle: { width: 2, color: '#365f8d' },
+      itemStyle: { color: '#365f8d' },
     },
   ],
 })
 
 export const createParkingRecognitionOption = (payload) => ({
+  animation: false,
   tooltip: { trigger: 'axis' },
-  grid: { left: 18, right: 18, top: 20, bottom: 24, containLabel: true },
+  grid: { left: 20, right: 12, top: 20, bottom: 24, containLabel: true },
   xAxis: {
     type: 'category',
     data: payload.labels,
-    axisLine: { lineStyle: { color: '#c7d3e3' } },
-    axisLabel: { color: '#5b6b7f', interval: 0, rotate: payload.labels.length > 4 ? 18 : 0 },
+    axisLine: { lineStyle: { color: '#ccd6e3' } },
+    axisLabel: { color: '#5a6d82', interval: 0 },
   },
   yAxis: {
     type: 'value',
-    splitLine: { lineStyle: { color: '#e7eef6' } },
-    axisLabel: { color: '#5b6b7f' },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: '#e9eef5' } },
+    axisLabel: { color: '#5a6d82' },
   },
   series: [
     {
       data: payload.values,
       type: 'bar',
-      barWidth: 26,
+      barWidth: 24,
       itemStyle: {
-        borderRadius: [6, 6, 0, 0],
         color: ({ dataIndex }) => payload.colors[dataIndex],
+        borderRadius: [4, 4, 0, 0],
       },
     },
   ],
 })
 
 export const createRiskLevelOption = (payload) => ({
+  animation: false,
   tooltip: { trigger: 'item' },
   legend: {
-    bottom: 0,
+    bottom: 2,
     itemWidth: 10,
     itemHeight: 10,
-    textStyle: { color: '#5b6b7f' },
+    textStyle: { color: '#5a6d82' },
   },
   series: [
     {
       type: 'pie',
-      radius: ['48%', '68%'],
+      radius: ['46%', '66%'],
       center: ['50%', '42%'],
-      label: { color: '#5b6b7f', formatter: '{b}\n{d}%' },
-      labelLine: { length: 12, length2: 8 },
+      label: { color: '#5a6d82', fontSize: 11 },
+      labelLine: { length: 10, length2: 6 },
       data: payload.map((item) => ({
         value: item.value,
         name: item.name,
@@ -86,62 +83,59 @@ export const createRiskLevelOption = (payload) => ({
 })
 
 export const createAreaRiskOption = (payload) => ({
+  animation: false,
   tooltip: { trigger: 'axis' },
-  grid: { left: 18, right: 24, top: 20, bottom: 24, containLabel: true },
+  grid: { left: 18, right: 20, top: 20, bottom: 18, containLabel: true },
   xAxis: {
     type: 'value',
-    splitLine: { lineStyle: { color: '#e7eef6' } },
-    axisLabel: { color: '#5b6b7f' },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: '#e9eef5' } },
+    axisLabel: { color: '#5a6d82' },
   },
   yAxis: {
     type: 'category',
     data: payload.map((item) => item.name),
-    axisLabel: { color: '#5b6b7f' },
+    axisLabel: { color: '#5a6d82' },
     axisLine: { show: false },
     axisTick: { show: false },
   },
   series: [
     {
       type: 'bar',
-      barWidth: 18,
+      barWidth: 14,
       data: payload.map((item) => ({
         value: item.value,
-        itemStyle: { color: item.color },
+        itemStyle: { color: item.color, borderRadius: [0, 4, 4, 0] },
       })),
-      label: {
-        show: true,
-        position: 'right',
-        color: '#3b4a5c',
-      },
+      label: { show: true, position: 'right', color: '#32465d', fontSize: 11 },
     },
   ],
 })
 
 export const createAlertTrendOption = (payload) => ({
+  animation: false,
   tooltip: { trigger: 'axis' },
-  legend: {
-    right: 0,
-    textStyle: { color: '#5b6b7f' },
-  },
-  grid: { left: 18, right: 18, top: 30, bottom: 24, containLabel: true },
+  legend: { right: 4, textStyle: { color: '#5a6d82' } },
+  grid: { left: 20, right: 16, top: 28, bottom: 22, containLabel: true },
   xAxis: {
     type: 'category',
     data: payload.labels,
-    axisLine: { lineStyle: { color: '#c7d3e3' } },
-    axisLabel: { color: '#5b6b7f' },
+    axisLine: { lineStyle: { color: '#ccd6e3' } },
+    axisLabel: { color: '#5a6d82' },
   },
   yAxis: {
     type: 'value',
-    splitLine: { lineStyle: { color: '#e7eef6' } },
-    axisLabel: { color: '#5b6b7f' },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: '#e9eef5' } },
+    axisLabel: { color: '#5a6d82' },
   },
   series: [
     {
       name: '告警总量',
       type: 'bar',
-      barWidth: 18,
+      barWidth: 14,
       data: payload.total,
-      itemStyle: { color: '#8fb7ff', borderRadius: [6, 6, 0, 0] },
+      itemStyle: { color: '#7f98b7', borderRadius: [3, 3, 0, 0] },
     },
     {
       name: '高风险事件',
@@ -149,9 +143,9 @@ export const createAlertTrendOption = (payload) => ({
       smooth: true,
       data: payload.highRisk,
       symbol: 'circle',
-      symbolSize: 7,
-      lineStyle: { width: 3, color: '#e35d5d' },
-      itemStyle: { color: '#e35d5d' },
+      symbolSize: 6,
+      lineStyle: { width: 2, color: '#ad5656' },
+      itemStyle: { color: '#ad5656' },
     },
   ],
 })

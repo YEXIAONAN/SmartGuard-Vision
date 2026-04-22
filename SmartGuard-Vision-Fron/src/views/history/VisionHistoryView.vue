@@ -7,43 +7,70 @@ import { dashboardApi } from '../../services/api'
 const history = useRecordHistory({
   listFetcher: dashboardApi.getVisionRecords,
   detailFetcher: dashboardApi.getVisionRecordDetail,
+  optionsFetcher: dashboardApi.getVisionFilterOptions,
   initialFilters: {
     keyword: '',
     eventType: '',
     riskLevel: '',
   },
-  requestMapper: (filters) => ({
+  requestMapper: (filters, page) => ({
     keyword: filters.keyword,
     event_type: filters.eventType,
     risk_level: filters.riskLevel,
-    limit: 100,
+    ...page,
+  }),
+  optionsMapper: (filters) => ({
+    keyword: filters.keyword,
+    event_type: filters.eventType,
+    risk_level: filters.riskLevel,
   }),
   listErrorMessage: '视觉历史加载失败',
   detailErrorMessage: '视觉记录详情加载失败',
+  optionsErrorMessage: '视觉筛选项加载失败',
 })
 
-onMounted(() => {
-  void history.fetchRecords()
+onMounted(async () => {
+  await history.reload({ syncOptions: true })
 })
 </script>
 
 <template>
   <div class="page-container">
-    <PanelCard title="视觉识别历史" extra="支持筛选和详情查看">
+    <PanelCard title="视觉识别历史" extra="服务端分页与联动筛选">
       <div class="toolbar">
-        <el-input v-model="history.filters.keyword" clearable placeholder="搜索设备编码、位置或事件类型" />
-        <el-select v-model="history.filters.eventType" clearable placeholder="事件类型">
-          <el-option label="飞线充电" value="飞线充电" />
-          <el-option label="越线停放" value="越线停放" />
-          <el-option label="明火" value="明火" />
-          <el-option label="电池拆卸充电" value="电池拆卸充电" />
+        <el-input
+          v-model="history.filters.keyword"
+          clearable
+          placeholder="搜索设备编码、位置或事件类型"
+          @change="history.onFilterChanged"
+        />
+        <el-select
+          v-model="history.filters.eventType"
+          clearable
+          placeholder="事件类型"
+          @change="history.onFilterChanged"
+        >
+          <el-option
+            v-for="option in history.filterOptions.first"
+            :key="option"
+            :label="option"
+            :value="option"
+          />
         </el-select>
-        <el-select v-model="history.filters.riskLevel" clearable placeholder="风险等级">
-          <el-option label="高风险" value="high" />
-          <el-option label="中风险" value="medium" />
-          <el-option label="低风险" value="low" />
+        <el-select
+          v-model="history.filters.riskLevel"
+          clearable
+          placeholder="风险等级"
+          @change="history.onFilterChanged"
+        >
+          <el-option
+            v-for="option in history.filterOptions.risk"
+            :key="option"
+            :label="option"
+            :value="option"
+          />
         </el-select>
-        <el-button type="primary" @click="history.fetchRecords">查询</el-button>
+        <el-button type="primary" @click="history.reload({ syncOptions: true })">查询</el-button>
         <el-button @click="history.resetFilters">重置</el-button>
       </div>
 
@@ -63,6 +90,19 @@ onMounted(() => {
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pager-wrap">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          :current-page="history.pagination.page"
+          :page-size="history.pagination.pageSize"
+          :total="history.pagination.total"
+          :page-sizes="[10, 20, 50]"
+          @current-change="history.onPageChanged"
+          @size-change="history.onPageSizeChanged"
+        />
+      </div>
     </PanelCard>
 
     <el-drawer v-model="history.drawerVisible" title="视觉记录详情" size="40%">
@@ -98,6 +138,12 @@ onMounted(() => {
 
 .history-table {
   width: 100%;
+}
+
+.pager-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
 }
 
 .detail-panel {
@@ -140,6 +186,10 @@ onMounted(() => {
 
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pager-wrap {
+    justify-content: center;
   }
 }
 </style>

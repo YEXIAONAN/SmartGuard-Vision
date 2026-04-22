@@ -26,3 +26,4 @@ class Alert(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     device = relationship("Device", back_populates="alerts")
+    action_logs = relationship("AlertActionLog", back_populates="alert", cascade="all, delete-orphan")

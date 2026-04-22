@@ -12,17 +12,17 @@ defineProps({
 
 const emit = defineEmits(['handle-alert'])
 
-const levelTypeMap = {
-  high: 'danger',
-  medium: 'warning',
-  low: 'info',
-  other: 'info',
+const riskClassMap = {
+  high: 'sg-status-tag-risk-high',
+  medium: 'sg-status-tag-risk-medium',
+  low: 'sg-status-tag-risk-low',
+  other: 'sg-status-tag-risk-low',
 }
 
-const statusTypeMap = {
-  pending: 'danger',
-  processing: 'warning',
-  resolved: 'success',
+const statusClassMap = {
+  pending: 'sg-status-tag-state-pending',
+  processing: 'sg-status-tag-state-processing',
+  resolved: 'sg-status-tag-state-resolved',
 }
 
 const openHandlingDialog = (alert, nextStatus) => {
@@ -31,71 +31,86 @@ const openHandlingDialog = (alert, nextStatus) => {
 </script>
 
 <template>
-  <div v-if="alerts.length" class="alert-list">
-    <div v-for="item in alerts" :key="item.id || `${item.time}-${item.place}`" class="alert-item">
-      <div class="alert-top">
-        <span class="alert-time">{{ item.time }}</span>
-        <div class="alert-tags">
-          <el-tag :type="levelTypeMap[item.levelKey] || 'info'" size="small" effect="plain">
-            {{ item.level }}
-          </el-tag>
-          <el-tag :type="statusTypeMap[item.rawStatus] || 'info'" size="small" effect="light">
-            {{ item.status }}
-          </el-tag>
+  <div class="alert-box">
+    <div v-if="alerts.length" class="alert-list">
+      <article v-for="item in alerts" :key="item.id || `${item.time}-${item.place}`" class="alert-item">
+        <header class="alert-head">
+          <span class="alert-time">{{ item.time }}</span>
+          <div class="alert-tags">
+            <span class="sg-status-tag" :class="riskClassMap[item.levelKey]">{{ item.level }}</span>
+            <span class="sg-status-tag" :class="statusClassMap[item.rawStatus]">{{ item.status }}</span>
+          </div>
+        </header>
+
+        <div class="alert-row">
+          <span class="label">监测点位</span>
+          <span class="value">{{ item.place }}</span>
         </div>
-      </div>
-      <div class="alert-place">{{ item.place }}</div>
-      <div class="alert-detail">{{ item.detail }}</div>
-      <div v-if="item.handledBy || item.handledAt || item.handlingNote" class="alert-meta">
-        <span v-if="item.handledBy">处理人：{{ item.handledBy }}</span>
-        <span v-if="item.handledAt">处置时间：{{ item.handledAt }}</span>
-        <span v-if="item.handlingNote">备注：{{ item.handlingNote }}</span>
-      </div>
-      <div v-if="item.rawStatus !== 'resolved'" class="alert-actions">
-        <el-button
-          v-if="item.rawStatus === 'pending'"
-          size="small"
-          type="warning"
-          plain
-          :loading="updatingAlertId === item.id"
-          @click="openHandlingDialog(item, 'processing')"
-        >
-          转处理中
-        </el-button>
-        <el-button
-          size="small"
-          type="success"
-          plain
-          :loading="updatingAlertId === item.id"
-          @click="openHandlingDialog(item, 'resolved')"
-        >
-          标记已处理
-        </el-button>
-      </div>
+        <div class="alert-row">
+          <span class="label">告警说明</span>
+          <span class="value">{{ item.detail }}</span>
+        </div>
+        <div v-if="item.handledBy || item.handledAt || item.handlingNote" class="alert-row">
+          <span class="label">处置记录</span>
+          <span class="value">
+            <template v-if="item.handledBy">处理人：{{ item.handledBy }}；</template>
+            <template v-if="item.handledAt">时间：{{ item.handledAt }}；</template>
+            <template v-if="item.handlingNote">备注：{{ item.handlingNote }}</template>
+          </span>
+        </div>
+
+        <footer v-if="item.rawStatus !== 'resolved'" class="alert-actions">
+          <el-button
+            v-if="item.rawStatus === 'pending'"
+            size="small"
+            type="warning"
+            plain
+            :loading="updatingAlertId === item.id"
+            @click="openHandlingDialog(item, 'processing')"
+          >
+            转处理中
+          </el-button>
+          <el-button
+            size="small"
+            type="success"
+            plain
+            :loading="updatingAlertId === item.id"
+            @click="openHandlingDialog(item, 'resolved')"
+          >
+            标记已处理
+          </el-button>
+        </footer>
+      </article>
     </div>
+    <el-empty v-else description="暂无实时告警" />
   </div>
-  <el-empty v-else description="暂无告警数据" />
 </template>
 
 <style scoped>
+.alert-box {
+  max-height: 630px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
 .alert-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .alert-item {
-  padding: 12px 14px;
-  border: 1px solid var(--sg-border-light);
-  border-radius: 12px;
-  background: #f9fbfe;
+  padding: 10px 12px;
+  border: 1px solid var(--sg-border);
+  border-radius: 8px;
+  background: #ffffff;
 }
 
-.alert-top {
+.alert-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 
 .alert-time {
@@ -105,39 +120,31 @@ const openHandlingDialog = (alert, nextStatus) => {
 
 .alert-tags {
   display: flex;
-  flex-wrap: wrap;
   gap: 6px;
 }
 
-.alert-place {
-  margin-top: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #22364f;
-}
-
-.alert-detail {
+.alert-row {
   margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--sg-text-secondary);
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
 }
 
-.alert-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed #dde7f2;
+.label {
   font-size: 12px;
-  color: var(--sg-text-secondary);
+  color: var(--sg-text-muted);
+}
+
+.value {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--sg-text-main);
 }
 
 .alert-actions {
+  margin-top: 10px;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 12px;
 }
 </style>
