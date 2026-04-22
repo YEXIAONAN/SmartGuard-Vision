@@ -1,6 +1,6 @@
 <script setup>
 import { ElMessage } from 'element-plus'
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed, reactive, ref, onBeforeUnmount, onMounted } from 'vue'
 import PanelCard from '../../components/common/PanelCard.vue'
 import DashboardAlertList from '../../components/dashboard/DashboardAlertList.vue'
 import DashboardChartPanel from '../../components/dashboard/DashboardChartPanel.vue'
@@ -21,6 +21,14 @@ import {
 const dashboardStore = useDashboardStore()
 const { currentTime } = useClock()
 
+const handlingDialogVisible = ref(false)
+const handlingTarget = ref(null)
+const handlingForm = reactive({
+  status: 'processing',
+  handledBy: '',
+  handlingNote: '',
+})
+
 const riskTrendOption = computed(() => createRiskTrendOption(dashboardStore.riskTrend))
 const eventDistributionOption = computed(() =>
   createParkingRecognitionOption(dashboardStore.eventDistribution),
@@ -29,11 +37,39 @@ const riskLevelOption = computed(() => createRiskLevelOption(dashboardStore.risk
 const areaRiskOption = computed(() => createAreaRiskOption(dashboardStore.areaRisk))
 const alertTrendOption = computed(() => createAlertTrendOption(dashboardStore.alertTrend))
 
-const handleAlertStatusUpdate = async ({ alertId, status }) => {
-  const success = await dashboardStore.updateAlertStatus(alertId, status)
+const openHandlingDialog = ({ alert, nextStatus }) => {
+  handlingTarget.value = alert
+  handlingForm.status = nextStatus
+  handlingForm.handledBy = alert.handledBy || ''
+  handlingForm.handlingNote = alert.handlingNote || ''
+  handlingDialogVisible.value = true
+}
+
+const closeHandlingDialog = () => {
+  handlingDialogVisible.value = false
+  handlingTarget.value = null
+  handlingForm.status = 'processing'
+  handlingForm.handledBy = ''
+  handlingForm.handlingNote = ''
+}
+
+const submitAlertHandling = async () => {
+  if (!handlingTarget.value) return
+  if (!handlingForm.handledBy.trim()) {
+    ElMessage.warning('请填写处理人')
+    return
+  }
+
+  const success = await dashboardStore.updateAlertStatus(handlingTarget.value.id, {
+    status: handlingForm.status,
+    handled_by: handlingForm.handledBy,
+    handling_note: handlingForm.handlingNote,
+  })
+
   if (!success) return
 
-  ElMessage.success(status === 'processing' ? '告警已转入处理中' : '告警已标记为已处理')
+  ElMessage.success(handlingForm.status === 'processing' ? '告警已转入处理中' : '告警已标记为已处理')
+  closeHandlingDialog()
 }
 
 onMounted(() => {
@@ -104,7 +140,7 @@ onBeforeUnmount(() => {
             <DashboardAlertList
               :alerts="dashboardStore.alerts"
               :updating-alert-id="dashboardStore.updatingAlertId"
-              @update-status="handleAlertStatusUpdate"
+              @handle-alert="openHandlingDialog"
             />
           </PanelCard>
           <PanelCard title="设备在线状态" extra="按设备类型统计">
@@ -138,6 +174,40 @@ onBeforeUnmount(() => {
         />
       </el-col>
     </el-row>
+
+    <el-dialog
+      v-model="handlingDialogVisible"
+      :title="handlingForm.status === 'processing' ? '转入处理中' : '标记已处理'"
+      width="520px"
+      @closed="closeHandlingDialog"
+    >
+      <el-form label-width="88px">
+        <el-form-item label="告警位置">
+          <div>{{ handlingTarget?.place || '--' }}</div>
+        </el-form-item>
+        <el-form-item label="处理人" required>
+          <el-input v-model="handlingForm.handledBy" placeholder="请输入处理人姓名或岗位" />
+        </el-form-item>
+        <el-form-item label="处理备注">
+          <el-input
+            v-model="handlingForm.handlingNote"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入联动处置说明、巡检结果或现场反馈"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeHandlingDialog">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="dashboardStore.updatingAlertId === handlingTarget?.id"
+          @click="submitAlertHandling"
+        >
+          确认提交
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 

@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.sensor_record import SensorRecord
@@ -7,6 +8,38 @@ from app.schemas.alert import AlertCreate
 from app.schemas.sensor_record import SensorRecordCreate
 from app.services.alert_service import create_alert
 from app.services.device_service import get_device_by_code
+
+
+def list_sensor_records(
+    db: Session,
+    *,
+    keyword: str | None = None,
+    sensor_type: str | None = None,
+    risk_level: str | None = None,
+    limit: int = 50,
+):
+    stmt = select(SensorRecord).order_by(SensorRecord.reported_at.desc()).limit(limit)
+
+    if keyword:
+        fuzzy_keyword = f"%{keyword.strip()}%"
+        stmt = stmt.where(
+            or_(
+                SensorRecord.device_code.ilike(fuzzy_keyword),
+                SensorRecord.location.ilike(fuzzy_keyword),
+                SensorRecord.sensor_type.ilike(fuzzy_keyword),
+            )
+        )
+    if sensor_type:
+        stmt = stmt.where(SensorRecord.sensor_type == sensor_type)
+    if risk_level:
+        stmt = stmt.where(SensorRecord.risk_level == risk_level)
+
+    return db.scalars(stmt).all()
+
+
+def get_sensor_record_by_id(db: Session, record_id: int):
+    stmt = select(SensorRecord).where(SensorRecord.id == record_id)
+    return db.scalar(stmt)
 
 
 def create_sensor_record(db: Session, payload: SensorRecordCreate):

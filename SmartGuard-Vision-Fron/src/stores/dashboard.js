@@ -186,6 +186,9 @@ const adaptDashboardData = ({ health, overview }) => ({
     place: item.location,
     detail: item.description,
     status: formatAlertStatus(item.status),
+    handledBy: item.handled_by || '',
+    handlingNote: item.handling_note || '',
+    handledAt: item.handled_at ? formatDateTime(item.handled_at) : '',
   })),
   devices: overview.device_status_summary || [],
   monitor: {
@@ -260,11 +263,11 @@ export const useDashboardStore = defineStore('dashboard', {
         this.loading = false
       }
     },
-    async updateAlertStatus(alertId, status) {
+    async updateAlertStatus(alertId, payload) {
       this.updatingAlertId = alertId
 
       try {
-        await dashboardApi.updateAlertStatus(alertId, status)
+        await dashboardApi.updateAlertStatus(alertId, payload)
         await this.fetchDashboard({ silent: true })
         return true
       } catch (error) {

@@ -10,7 +10,7 @@ defineProps({
   },
 })
 
-const emit = defineEmits(['update-status'])
+const emit = defineEmits(['handle-alert'])
 
 const levelTypeMap = {
   high: 'danger',
@@ -25,8 +25,8 @@ const statusTypeMap = {
   resolved: 'success',
 }
 
-const handleStatusUpdate = (alertId, status) => {
-  emit('update-status', { alertId, status })
+const openHandlingDialog = (alert, nextStatus) => {
+  emit('handle-alert', { alert, nextStatus })
 }
 </script>
 
@@ -46,6 +46,11 @@ const handleStatusUpdate = (alertId, status) => {
       </div>
       <div class="alert-place">{{ item.place }}</div>
       <div class="alert-detail">{{ item.detail }}</div>
+      <div v-if="item.handledBy || item.handledAt || item.handlingNote" class="alert-meta">
+        <span v-if="item.handledBy">处理人：{{ item.handledBy }}</span>
+        <span v-if="item.handledAt">处置时间：{{ item.handledAt }}</span>
+        <span v-if="item.handlingNote">备注：{{ item.handlingNote }}</span>
+      </div>
       <div v-if="item.rawStatus !== 'resolved'" class="alert-actions">
         <el-button
           v-if="item.rawStatus === 'pending'"
@@ -53,7 +58,7 @@ const handleStatusUpdate = (alertId, status) => {
           type="warning"
           plain
           :loading="updatingAlertId === item.id"
-          @click="handleStatusUpdate(item.id, 'processing')"
+          @click="openHandlingDialog(item, 'processing')"
         >
           转处理中
         </el-button>
@@ -62,7 +67,7 @@ const handleStatusUpdate = (alertId, status) => {
           type="success"
           plain
           :loading="updatingAlertId === item.id"
-          @click="handleStatusUpdate(item.id, 'resolved')"
+          @click="openHandlingDialog(item, 'resolved')"
         >
           标记已处理
         </el-button>
@@ -115,6 +120,17 @@ const handleStatusUpdate = (alertId, status) => {
   margin-top: 6px;
   font-size: 13px;
   line-height: 1.6;
+  color: var(--sg-text-secondary);
+}
+
+.alert-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #dde7f2;
+  font-size: 12px;
   color: var(--sg-text-secondary);
 }
 

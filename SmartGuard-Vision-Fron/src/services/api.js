@@ -47,13 +47,25 @@ export const dashboardApi = {
   getOverview() {
     return request('/api/dashboard/overview')
   },
-  updateAlertStatus(alertId, status) {
+  updateAlertStatus(alertId, payload) {
     return request(`/api/alerts/${alertId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(payload),
     })
+  },
+  getVisionRecords(params = {}) {
+    return request('/api/vision', { params })
+  },
+  getVisionRecordDetail(recordId) {
+    return request(`/api/vision/${recordId}`)
+  },
+  getSensorRecords(params = {}) {
+    return request('/api/sensors', { params })
+  },
+  getSensorRecordDetail(recordId) {
+    return request(`/api/sensors/${recordId}`)
   },
 }

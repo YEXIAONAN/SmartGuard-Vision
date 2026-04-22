@@ -27,7 +27,14 @@ def patch_alert_status(
     alert_id: int = Path(..., ge=1, description="告警 ID"),
     db: Session = Depends(get_db),
 ):
-    alert = update_alert_status(db, alert_id=alert_id, status=payload.status)
+    alert = update_alert_status(
+        db,
+        alert_id=alert_id,
+        status=payload.status,
+        handled_by=payload.handled_by,
+        handling_note=payload.handling_note,
+        handled_at=payload.handled_at,
+    )
     if alert is None:
         raise HTTPException(status_code=404, detail="alert not found")
     return success_response(data=alert, message="alert status updated")

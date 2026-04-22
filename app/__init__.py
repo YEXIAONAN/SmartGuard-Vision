@@ -1,1 +1,1 @@
-"""SmartGuard Vision backend application package."""
+"""智感护航后端应用包。"""

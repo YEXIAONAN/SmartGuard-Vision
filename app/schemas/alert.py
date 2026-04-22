@@ -13,6 +13,9 @@ class AlertBase(BaseModel):
     location: str
     description: str
     status: str
+    handled_by: str | None = None
+    handling_note: str | None = None
+    handled_at: datetime | None = None
     device_id: int | None = None
 
 
@@ -23,6 +26,9 @@ class AlertCreate(BaseModel):
     location: str
     description: str
     status: str = "pending"
+    handled_by: str | None = None
+    handling_note: str | None = None
+    handled_at: datetime | None = None
     device_id: int | None = None
     occurred_at: datetime | None = None
 
@@ -38,3 +44,6 @@ class AlertRead(AlertBase):
 
 class AlertStatusUpdate(BaseModel):
     status: Literal["pending", "processing", "resolved"]
+    handled_by: str | None = None
+    handling_note: str | None = None
+    handled_at: datetime | None = None

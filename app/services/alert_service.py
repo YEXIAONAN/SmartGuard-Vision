@@ -26,6 +26,9 @@ def create_alert(db: Session, payload: AlertCreate):
         location=payload.location,
         description=payload.description,
         status=payload.status,
+        handled_by=payload.handled_by,
+        handling_note=payload.handling_note,
+        handled_at=payload.handled_at,
         device_id=payload.device_id,
         occurred_at=payload.occurred_at or datetime.now(),
     )
@@ -39,12 +42,35 @@ def get_alert_by_id(db: Session, alert_id: int):
     return db.scalar(stmt)
 
 
-def update_alert_status(db: Session, alert_id: int, status: str):
+def update_alert_status(
+    db: Session,
+    alert_id: int,
+    status: str,
+    handled_by: str | None = None,
+    handling_note: str | None = None,
+    handled_at: datetime | None = None,
+):
     alert = get_alert_by_id(db, alert_id)
     if not alert:
         return None
 
     alert.status = status
+    if handled_by is not None:
+        alert.handled_by = handled_by.strip() or None
+    if handling_note is not None:
+        alert.handling_note = handling_note.strip() or None
+
+    if status == "pending":
+        alert.handled_at = None
+        if handled_by is None:
+            alert.handled_by = None
+        if handling_note is None:
+            alert.handling_note = None
+    elif handled_at is not None:
+        alert.handled_at = handled_at
+    elif status == "resolved":
+        alert.handled_at = datetime.now()
+
     db.commit()
     db.refresh(alert)
     return alert

@@ -1,6 +1,6 @@
-# SmartGuard-Vision-Fron
+# 智感护航前端
 
-SmartGuard Vision 的前端监控大屏，基于 `Vue 3 + Vite + Pinia + Element Plus + ECharts` 构建。
+智感护航的前端监控大屏，基于 `Vue 3 + Vite + Pinia + Element Plus + ECharts` 构建。
 
 ## 开发环境
 
