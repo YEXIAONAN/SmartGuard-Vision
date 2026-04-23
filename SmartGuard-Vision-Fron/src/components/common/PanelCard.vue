@@ -40,11 +40,20 @@ const showHeader = computed(() => props.title || props.extra || slots.header)
   border-radius: var(--sg-radius-card);
   background: var(--sg-bg-card);
   box-shadow: var(--sg-shadow-soft);
+  backdrop-filter: var(--sg-blur-xl);
+  -webkit-backdrop-filter: var(--sg-blur-xl);
+  transition: all 0.2s ease;
+}
+
+.panel-card:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.66);
 }
 
 :deep(.el-card__header) {
   padding: 10px 14px;
-  border-bottom: 1px solid #edf2f8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .panel-head {
@@ -57,11 +66,11 @@ const showHeader = computed(() => props.title || props.extra || slots.header)
 .panel-title {
   font-size: 14px;
   font-weight: 600;
-  color: #2a3d52;
+  color: #1d1d1f;
 }
 
 .panel-extra {
   font-size: 11px;
-  color: var(--sg-text-muted);
+  color: #6e6e73;
 }
 </style>

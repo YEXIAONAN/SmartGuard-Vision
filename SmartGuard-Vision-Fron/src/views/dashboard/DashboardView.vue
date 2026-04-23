@@ -340,16 +340,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.sync-alert {
-  margin-bottom: 14px;
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.dashboard-layer + .dashboard-layer {
-  margin-top: 14px;
+.sync-alert {
+  margin-bottom: 0;
 }
 
 .ops-bar {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -358,14 +360,15 @@ onMounted(() => {
 
 .risk-center {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(340px, 5fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(420px, 1fr);
+  gap: 12px;
+  align-items: start;
 }
 
 .risk-side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .risk-detail {
@@ -394,18 +397,18 @@ onMounted(() => {
 
 .trend-center {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(320px, 5fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr);
+  gap: 12px;
 }
 
 .trend-row {
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .trend-side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .audit-log-block {
@@ -427,6 +430,13 @@ onMounted(() => {
   gap: 4px;
   font-size: 13px;
   color: var(--sg-text-secondary);
+}
+
+@media (min-width: 1800px) {
+  .risk-center,
+  .trend-center {
+    grid-template-columns: minmax(0, 1.45fr) minmax(460px, 1fr);
+  }
 }
 
 @media (max-width: 1400px) {

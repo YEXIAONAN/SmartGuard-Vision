@@ -1,23 +1,39 @@
-<script setup>
-import { ElMessage } from 'element-plus'
+<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import PanelCard from '../../components/common/PanelCard.vue'
-import { dashboardApi } from '../../services/api'
+import { ElMessage } from 'element-plus'
+import AppShell from '@/components/dashboard/AppShell.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import { dashboardApi } from '@/services/api'
+
+interface SensorRecord {
+  id: number
+  device_code: string
+  location: string
+  sensor_type: string
+  temperature?: number
+  humidity?: number
+  smoke_ppm?: number
+  risk_level: string
+  reported_at: string
+}
 
 const loading = ref(false)
-const detailLoading = ref(false)
 const drawerVisible = ref(false)
-const records = ref([])
-const detail = ref(null)
+const detailLoading = ref(false)
+const records = ref<SensorRecord[]>([])
+const detail = ref<Record<string, any> | null>(null)
+
 const filterOptions = reactive({
-  sensorTypes: [],
-  riskLevels: [],
+  sensorTypes: [] as string[],
+  riskLevels: [] as string[],
 })
+
 const filters = reactive({
   keyword: '',
   sensorType: '',
   riskLevel: '',
 })
+
 const pagination = reactive({
   page: 1,
   pageSize: 20,
@@ -27,17 +43,13 @@ const pagination = reactive({
 const payloadText = () => JSON.stringify(detail.value?.payload || {}, null, 2)
 
 const fetchFilterOptions = async () => {
-  try {
-    const data = await dashboardApi.getSensorFilterOptions({
-      keyword: filters.keyword || undefined,
-      sensor_type: filters.sensorType || undefined,
-      risk_level: filters.riskLevel || undefined,
-    })
-    filterOptions.sensorTypes = data.first || []
-    filterOptions.riskLevels = data.risk || []
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '传感筛选项加载失败')
-  }
+  const data = await dashboardApi.getSensorFilterOptions({
+    keyword: filters.keyword || undefined,
+    sensor_type: filters.sensorType || undefined,
+    risk_level: filters.riskLevel || undefined,
+  })
+  filterOptions.sensorTypes = data.first || []
+  filterOptions.riskLevels = data.risk || []
 }
 
 const fetchRecords = async () => {
@@ -61,13 +73,17 @@ const fetchRecords = async () => {
   }
 }
 
-const reload = async () => {
-  await Promise.all([fetchFilterOptions(), fetchRecords()])
+const reloadData = async () => {
+  try {
+    await Promise.all([fetchFilterOptions(), fetchRecords()])
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '筛选项加载失败')
+  }
 }
 
 const onSearch = async () => {
   pagination.page = 1
-  await reload()
+  await reloadData()
 }
 
 const onReset = async () => {
@@ -75,41 +91,41 @@ const onReset = async () => {
   filters.sensorType = ''
   filters.riskLevel = ''
   pagination.page = 1
-  await reload()
+  await reloadData()
 }
 
-const onPageChanged = async (page) => {
+const onPageChanged = async (page: number) => {
   pagination.page = page
   await fetchRecords()
 }
 
-const onPageSizeChanged = async (pageSize) => {
+const onPageSizeChanged = async (pageSize: number) => {
   pagination.pageSize = pageSize
   pagination.page = 1
   await fetchRecords()
 }
 
-const openDetail = async (recordId) => {
+const openDetail = async (recordId: number) => {
   drawerVisible.value = true
   detailLoading.value = true
   detail.value = null
   try {
     detail.value = await dashboardApi.getSensorRecordDetail(recordId)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '传感记录详情加载失败')
+    ElMessage.error(error instanceof Error ? error.message : '记录详情加载失败')
   } finally {
     detailLoading.value = false
   }
 }
 
 onMounted(async () => {
-  await reload()
+  await reloadData()
 })
 </script>
 
 <template>
-  <div class="page-container">
-    <PanelCard title="传感历史记录" extra="服务端分页与条件联动筛选">
+  <AppShell @refresh="reloadData">
+    <AppCard title="传感历史" extra="服务端分页 + 条件联动筛选">
       <div class="toolbar">
         <el-input
           v-model="filters.keyword"
@@ -165,7 +181,7 @@ onMounted(async () => {
           @size-change="onPageSizeChanged"
         />
       </div>
-    </PanelCard>
+    </AppCard>
 
     <el-drawer v-model="drawerVisible" title="传感记录详情" size="40%">
       <div v-loading="detailLoading" class="detail-panel">
@@ -180,21 +196,21 @@ onMounted(async () => {
             <div><strong>烟雾：</strong>{{ detail.smoke_ppm ?? '--' }} ppm</div>
             <div><strong>监测位置：</strong>{{ detail.location }}</div>
           </div>
-          <PanelCard title="原始载荷" body-padding="16px">
+          <AppCard title="原始载荷">
             <pre class="payload-text">{{ payloadText() }}</pre>
-          </PanelCard>
+          </AppCard>
         </template>
       </div>
     </el-drawer>
-  </div>
+  </AppShell>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .toolbar {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr auto auto;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .history-table {
@@ -208,7 +224,7 @@ onMounted(async () => {
 }
 
 .detail-panel {
-  min-height: 240px;
+  min-height: 260px;
 }
 
 .detail-grid {
@@ -217,16 +233,16 @@ onMounted(async () => {
   gap: 12px;
   margin-bottom: 16px;
   padding: 14px;
-  border: 1px solid var(--sg-border-light);
-  border-radius: 12px;
-  background: var(--sg-bg-soft);
+  border-radius: 14px;
+  border: 1px solid rgba(226, 236, 248, 0.8);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .payload-text {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  color: var(--sg-text-main);
+  color: #1d1d1f;
 }
 
 @media (max-width: 992px) {
@@ -234,12 +250,12 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
   .pager-wrap {
     justify-content: center;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

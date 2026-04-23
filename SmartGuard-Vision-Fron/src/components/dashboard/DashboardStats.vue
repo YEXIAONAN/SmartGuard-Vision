@@ -33,32 +33,42 @@ const toneClassMap = {
 
 <style scoped>
 .stats-block {
-  margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
 }
 
 .stat-card {
-  padding: 14px 16px;
+  min-height: 126px;
+  padding: 12px 14px;
   border: 1px solid var(--sg-border);
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--sg-bg-card);
   box-shadow: var(--sg-shadow-soft);
+  backdrop-filter: var(--sg-blur-xl);
+  -webkit-backdrop-filter: var(--sg-blur-xl);
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.68);
 }
 
 .stat-card-key {
-  grid-column: span 3;
+  grid-column: span 2;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(238, 246, 255, 0.72) 100%);
 }
 
 .stat-card-normal {
-  grid-column: span 2;
+  grid-column: span 1;
 }
 
 .stat-title {
   font-size: 13px;
   font-weight: 600;
-  color: #33485d;
+  color: #3a3a3c;
 }
 
 .stat-value-wrap {
@@ -69,7 +79,7 @@ const toneClassMap = {
 }
 
 .stat-value {
-  font-size: 30px;
+  font-size: 32px;
   line-height: 1;
   font-weight: 700;
 }
@@ -82,45 +92,33 @@ const toneClassMap = {
 .stat-note {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed #dbe4ee;
+  border-top: 1px dashed rgba(196, 212, 229, 0.8);
   font-size: 12px;
   line-height: 1.6;
   color: var(--sg-text-secondary);
 }
 
 .stat-tone-neutral .stat-value {
-  color: #2b4a74;
+  color: #007aff;
 }
 
 .stat-tone-warning .stat-value {
-  color: #9b6b2c;
+  color: #ff9f0a;
 }
 
 .stat-tone-danger .stat-value {
-  color: #9f3e3e;
+  color: #ff3b30;
 }
 
 @media (max-width: 1366px) {
   .stat-card-key {
-    grid-column: span 4;
-  }
-
-  .stat-card-normal {
-    grid-column: span 4;
+    grid-column: span 1;
   }
 }
 
 @media (max-width: 992px) {
-  .stat-card-key,
-  .stat-card-normal {
-    grid-column: span 6;
-  }
-}
-
-@media (max-width: 640px) {
-  .stat-card-key,
-  .stat-card-normal {
-    grid-column: span 12;
+  .stats-block {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 }
 </style>

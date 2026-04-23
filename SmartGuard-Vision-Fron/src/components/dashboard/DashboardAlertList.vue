@@ -92,7 +92,7 @@ const openHandlingDialog = (alert, nextStatus) => {
 
 <style scoped>
 .alert-box {
-  max-height: 630px;
+  max-height: min(44vh, 420px);
   overflow: auto;
   padding-right: 4px;
 }
@@ -150,5 +150,17 @@ const openHandlingDialog = (alert, nextStatus) => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+@media (min-width: 1800px) {
+  .alert-box {
+    max-height: min(48vh, 520px);
+  }
+}
+
+@media (max-width: 1400px) {
+  .alert-box {
+    max-height: 520px;
+  }
 }
 </style>

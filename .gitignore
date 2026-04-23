@@ -1,5 +1,21 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
-.SmartGuard-Fron/node_modules/*
-.SmartGuard-Fron/dist/*
+.pytest_cache/
+
+# Local database/runtime artifacts
+*.db
+
+# Frontend (Vue)
+SmartGuard-Vision-Fron/node_modules/
+SmartGuard-Vision-Fron/dist/
+
+# Optional Node backend workspace
+server/node_modules/
+server/dist/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/

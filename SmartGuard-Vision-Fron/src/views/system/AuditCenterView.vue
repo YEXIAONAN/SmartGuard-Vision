@@ -1,16 +1,28 @@
-<script setup>
-import { ElMessage } from 'element-plus'
+<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import PanelCard from '../../components/common/PanelCard.vue'
-import { auditApi } from '../../services/api'
+import { ElMessage } from 'element-plus'
+import AppShell from '@/components/dashboard/AppShell.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import { auditApi } from '@/services/api'
+
+interface AuditLog {
+  created_at: string
+  username: string
+  role: string
+  action: string
+  target_type?: string
+  target_id?: string
+  detail?: string
+}
 
 const loading = ref(false)
-const logs = ref([])
+const logs = ref<AuditLog[]>([])
 const pagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0,
 })
+
 const filters = reactive({
   username: '',
   action: '',
@@ -25,36 +37,43 @@ const fetchLogs = async () => {
       username: filters.username || undefined,
       action: filters.action || undefined,
     })
-    logs.value = data.items
-    pagination.total = data.total
+    logs.value = data.items || []
+    pagination.total = data.total || 0
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '审计日志加载失败')
+    logs.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
 }
 
-const onPageChanged = (nextPage) => {
-  pagination.page = nextPage
-  void fetchLogs()
+const onSearch = async () => {
+  pagination.page = 1
+  await fetchLogs()
 }
 
-const onPageSizeChanged = (nextSize) => {
+const onPageChanged = async (nextPage: number) => {
+  pagination.page = nextPage
+  await fetchLogs()
+}
+
+const onPageSizeChanged = async (nextSize: number) => {
   pagination.pageSize = nextSize
   pagination.page = 1
-  void fetchLogs()
+  await fetchLogs()
 }
 
 onMounted(fetchLogs)
 </script>
 
 <template>
-  <div class="page-container">
-    <PanelCard title="审计中心" extra="关键操作全量留痕">
+  <AppShell @refresh="fetchLogs">
+    <AppCard title="审计中心" extra="关键操作全量留痕">
       <div class="toolbar">
         <el-input v-model="filters.username" clearable placeholder="用户名" />
         <el-input v-model="filters.action" clearable placeholder="动作类型（如 auth.login）" />
-        <el-button type="primary" @click="fetchLogs">查询</el-button>
+        <el-button type="primary" @click="onSearch">查询</el-button>
       </div>
 
       <el-table v-loading="loading" :data="logs" border>
@@ -79,11 +98,11 @@ onMounted(fetchLogs)
           @size-change="onPageSizeChanged"
         />
       </div>
-    </PanelCard>
-  </div>
+    </AppCard>
+  </AppShell>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .toolbar {
   display: grid;
   grid-template-columns: 1fr 1fr auto;

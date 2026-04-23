@@ -1,22 +1,23 @@
 :root {
   color-scheme: light;
-  --sg-color-primary: #2f4f79;
-  --sg-color-primary-soft: #6a87ad;
-  --sg-color-primary-pale: #eaf1f8;
-  --sg-color-success: #3f8d64;
-  --sg-color-warning: #b47a35;
-  --sg-color-danger: #b65252;
-  --sg-text-main: #1f2933;
-  --sg-text-secondary: #4f5f72;
-  --sg-text-muted: #6a7b8f;
-  --sg-border: #d8e0ea;
-  --sg-border-light: #e3e9f1;
-  --sg-bg-page: #eff3f8;
-  --sg-bg-page-alt: #e9eef5;
-  --sg-bg-card: #ffffff;
-  --sg-bg-soft: #f7f9fc;
-  --sg-radius-card: 10px;
-  --sg-shadow-soft: 0 6px 18px rgba(31, 41, 51, 0.06);
+  --sg-color-primary: #007aff;
+  --sg-color-primary-soft: #5ac8fa;
+  --sg-color-primary-pale: #eaf4ff;
+  --sg-color-success: #34c759;
+  --sg-color-warning: #ff9f0a;
+  --sg-color-danger: #ff3b30;
+  --sg-text-main: #1d1d1f;
+  --sg-text-secondary: #3a3a3c;
+  --sg-text-muted: #6e6e73;
+  --sg-border: rgba(255, 255, 255, 0.45);
+  --sg-border-light: rgba(255, 255, 255, 0.35);
+  --sg-bg-page: #f4f7fd;
+  --sg-bg-page-alt: #edf2fb;
+  --sg-bg-card: rgba(255, 255, 255, 0.58);
+  --sg-bg-soft: rgba(255, 255, 255, 0.5);
+  --sg-radius-card: 16px;
+  --sg-shadow-soft: 0 8px 30px rgba(15, 23, 42, 0.08);
+  --sg-blur-xl: blur(20px);
   font-family:
     'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }

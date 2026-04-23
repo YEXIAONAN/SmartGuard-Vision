@@ -11,6 +11,9 @@ body,
 body {
   margin: 0;
   background:
+    radial-gradient(1200px 600px at 8% -10%, rgba(90, 200, 250, 0.2), transparent 60%),
+    radial-gradient(1100px 560px at 96% 0%, rgba(0, 122, 255, 0.16), transparent 64%),
+    radial-gradient(800px 520px at 50% 120%, rgba(52, 199, 89, 0.1), transparent 70%),
     linear-gradient(180deg, var(--sg-bg-page) 0%, var(--sg-bg-page-alt) 100%);
   color: var(--sg-text-main);
 }
@@ -21,7 +24,7 @@ a {
 }
 
 .page-container {
-  padding: 16px 20px 20px;
+  padding: 14px 20px 20px;
 }
 
 .stack-column {
@@ -75,24 +78,40 @@ a {
 .el-button--primary {
   --el-button-bg-color: var(--sg-color-primary);
   --el-button-border-color: var(--sg-color-primary);
-  --el-button-hover-bg-color: #3c5f8f;
-  --el-button-hover-border-color: #3c5f8f;
+  --el-button-hover-bg-color: #2c8dff;
+  --el-button-hover-border-color: #2c8dff;
+  --el-button-active-bg-color: #0068d9;
+  --el-button-active-border-color: #0068d9;
 }
 
 .el-tag {
-  border-radius: 8px;
+  border-radius: 999px;
   font-weight: 600;
 }
 
 .el-table {
-  --el-table-border-color: var(--sg-border-light);
-  --el-table-header-bg-color: #f4f7fb;
-  --el-table-row-hover-bg-color: #f8fbff;
+  --el-table-border-color: rgba(198, 213, 232, 0.42);
+  --el-table-header-bg-color: rgba(245, 249, 255, 0.78);
+  --el-table-row-hover-bg-color: rgba(240, 247, 255, 0.78);
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .el-table th.el-table__cell {
   font-weight: 600;
-  color: #344458;
+  color: #2f3c4d;
+}
+
+.el-dialog {
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14) !important;
+  backdrop-filter: var(--sg-blur-xl);
+}
+
+.el-overlay-dialog {
+  backdrop-filter: blur(6px);
 }
 
 .el-tabs__item {

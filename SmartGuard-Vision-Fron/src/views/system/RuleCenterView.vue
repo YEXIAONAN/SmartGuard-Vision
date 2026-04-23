@@ -1,11 +1,18 @@
-<script setup>
-import { ElMessage } from 'element-plus'
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import PanelCard from '../../components/common/PanelCard.vue'
-import { dashboardApi } from '../../services/api'
+import { ElMessage } from 'element-plus'
+import AppShell from '@/components/dashboard/AppShell.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import { dashboardApi } from '@/services/api'
+
+interface RuleItem {
+  rule_key: string
+  description: string
+  rule_value: string | number
+}
 
 const loading = ref(false)
-const rules = ref([])
+const rules = ref<RuleItem[]>([])
 
 const fetchRules = async () => {
   loading.value = true
@@ -18,7 +25,7 @@ const fetchRules = async () => {
   }
 }
 
-const updateRule = async (row) => {
+const updateRule = async (row: RuleItem) => {
   try {
     await dashboardApi.updateRule(row.rule_key, {
       rule_value: row.rule_value,
@@ -35,11 +42,11 @@ onMounted(fetchRules)
 </script>
 
 <template>
-  <div class="page-container">
-    <PanelCard title="规则中心" extra="阈值与 SLA 可配置">
+  <AppShell @refresh="fetchRules">
+    <AppCard title="规则中心" extra="阈值与 SLA 配置">
       <el-table v-loading="loading" :data="rules" border>
-        <el-table-column prop="rule_key" label="规则键" min-width="180" />
-        <el-table-column prop="description" label="说明" min-width="260" />
+        <el-table-column prop="rule_key" label="规则键" min-width="220" />
+        <el-table-column prop="description" label="说明" min-width="300" />
         <el-table-column label="规则值" min-width="180">
           <template #default="{ row }">
             <el-input v-model="row.rule_value" />
@@ -51,6 +58,6 @@ onMounted(fetchRules)
           </template>
         </el-table-column>
       </el-table>
-    </PanelCard>
-  </div>
+    </AppCard>
+  </AppShell>
 </template>
