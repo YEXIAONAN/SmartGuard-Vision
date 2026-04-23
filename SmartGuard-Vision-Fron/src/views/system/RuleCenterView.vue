@@ -36,7 +36,7 @@ onMounted(fetchRules)
 
 <template>
   <div class="page-container">
-    <PanelCard title="规则配置中心" extra="阈值与SLA可配置">
+    <PanelCard title="规则中心" extra="阈值与 SLA 可配置">
       <el-table v-loading="loading" :data="rules" border>
         <el-table-column prop="rule_key" label="规则键" min-width="180" />
         <el-table-column prop="description" label="说明" min-width="260" />
