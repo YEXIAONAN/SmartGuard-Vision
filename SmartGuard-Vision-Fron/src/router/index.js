@@ -11,6 +11,7 @@ router.beforeEach((to) => {
   const authStore = useAuthStore()
   const requiresAuth = Boolean(to.meta?.requiresAuth)
   const guestOnly = Boolean(to.meta?.guestOnly)
+  const allowedRoles = to.meta?.roles
 
   if (requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
@@ -18,6 +19,12 @@ router.beforeEach((to) => {
 
   if (guestOnly && authStore.isAuthenticated) {
     return { name: 'dashboard' }
+  }
+
+  if (requiresAuth && Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+    if (!allowedRoles.includes(authStore.role)) {
+      return { name: 'dashboard' }
+    }
   }
 
   return true

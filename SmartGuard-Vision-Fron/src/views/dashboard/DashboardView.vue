@@ -51,7 +51,6 @@ const riskLevelOption = computed(() => createRiskLevelOption(dashboardStore.risk
 const areaRiskOption = computed(() => createAreaRiskOption(dashboardStore.areaRisk))
 const alertTrendOption = computed(() => createAlertTrendOption(dashboardStore.alertTrend))
 const currentAlert = computed(() => dashboardStore.alerts[0] || null)
-
 const riskTagClass = (levelKey) =>
   `sg-status-tag-risk-${['high', 'medium', 'low'].includes(levelKey) ? levelKey : 'low'}`
 const stateTagClass = (statusKey) =>
@@ -108,6 +107,32 @@ const submitAlertHandling = async () => {
   closeHandlingDialog()
 }
 
+const runSlaScan = async () => {
+  try {
+    const result = await dashboardApi.scanAlertSla()
+    ElMessage.success(`SLA扫描完成，自动升级 ${result.escalated_count} 条告警`)
+    await dashboardStore.fetchDashboard({ silent: true })
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : 'SLA 扫描失败')
+  }
+}
+
+const downloadAlertsCsv = async () => {
+  try {
+    const blob = await dashboardApi.exportAlertsCsv()
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'alerts.csv'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '导出失败')
+  }
+}
+
 onMounted(() => {
   if (!dashboardStore.initialized) {
     void dashboardStore.fetchDashboard()
@@ -132,6 +157,10 @@ onMounted(() => {
     />
 
     <section class="dashboard-layer">
+      <div class="ops-bar">
+        <el-button link type="primary" @click="downloadAlertsCsv">导出告警 CSV</el-button>
+        <el-button v-if="authStore.canHandleAlerts" size="small" @click="runSlaScan">执行 SLA 扫描</el-button>
+      </div>
       <DashboardStats :stats="dashboardStore.stats" />
     </section>
 
@@ -317,6 +346,14 @@ onMounted(() => {
 
 .dashboard-layer + .dashboard-layer {
   margin-top: 14px;
+}
+
+.ops-bar {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .risk-center {

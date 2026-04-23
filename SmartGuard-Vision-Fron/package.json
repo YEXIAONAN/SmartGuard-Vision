@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "vitest run",
     "preview": "vite preview",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
@@ -31,7 +32,9 @@
     "oxlint": "~1.57.0",
     "prettier": "3.8.1",
     "vite": "^8.0.3",
-    "vite-plugin-vue-devtools": "^8.1.1"
+    "vite-plugin-vue-devtools": "^8.1.1",
+    "vitest": "^4.0.7",
+    "jsdom": "^27.0.1"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

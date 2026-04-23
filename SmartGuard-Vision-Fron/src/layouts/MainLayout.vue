@@ -17,6 +17,8 @@ const navItems = [
   { path: '/', label: '首页总览' },
   { path: '/vision-history', label: '视觉历史' },
   { path: '/sensor-history', label: '传感历史' },
+  { path: '/rules', label: '规则中心', roles: ['admin', 'operator'] },
+  { path: '/audit', label: '审计中心', roles: ['admin'] },
 ]
 
 const roleLabelMap = {
@@ -27,6 +29,9 @@ const roleLabelMap = {
 
 const activePath = computed(() => route.path)
 const roleLabel = computed(() => roleLabelMap[authStore.role] || authStore.role || '--')
+const visibleNavItems = computed(() =>
+  navItems.filter((item) => !item.roles || item.roles.includes(authStore.role)),
+)
 const systemStateClass = computed(() =>
   dashboardStore.systemStatus.includes('正常') ? 'state-ok' : 'state-danger',
 )
@@ -35,6 +40,11 @@ const headerRefreshInterval = 60000
 let timerId = null
 
 const logout = async () => {
+  try {
+    await authApi.logout({ refresh_token: authStore.refreshToken || null })
+  } catch {
+    // 忽略登出接口异常，保证本地会话能清理。
+  }
   authStore.clearSession()
   dashboardStore.stopAutoRefresh()
   await router.replace('/login')
@@ -44,7 +54,11 @@ const logout = async () => {
 onMounted(async () => {
   try {
     const me = await authApi.getMe()
-    authStore.setSession({ token: authStore.token, user: me })
+    authStore.setSession({
+      token: authStore.token,
+      refreshToken: authStore.refreshToken,
+      user: me,
+    })
   } catch {
     await logout()
     return
@@ -107,7 +121,7 @@ onBeforeUnmount(() => {
 
       <nav class="console-tabs">
         <router-link
-          v-for="item in navItems"
+          v-for="item in visibleNavItems"
           :key="item.path"
           :to="item.path"
           class="console-tab"

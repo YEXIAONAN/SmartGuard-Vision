@@ -35,7 +35,11 @@ const submit = async () => {
   loading.value = true
   try {
     const data = await authApi.login(form)
-    authStore.setSession({ token: data.access_token, user: data.user })
+    authStore.setSession({
+      token: data.access_token,
+      refreshToken: data.refresh_token,
+      user: data.user,
+    })
     ElMessage.success('登录成功')
     const redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     await router.replace(redirectPath)

@@ -28,14 +28,21 @@ export const useRecordHistory = ({
     risk: [],
   })
 
+  let listRequestId = 0
+  let optionsRequestId = 0
+  let debounceTimer = null
+
   const payloadText = computed(() => JSON.stringify(detail.value?.payload || {}, null, 2))
 
   const fetchOptions = async () => {
     if (!optionsFetcher) return
+    optionsRequestId += 1
+    const currentId = optionsRequestId
     try {
       const options = await optionsFetcher(optionsMapper(filters))
-      filterOptions.first = options.first
-      filterOptions.risk = options.risk
+      if (currentId !== optionsRequestId) return
+      filterOptions.first = options.first || []
+      filterOptions.risk = options.risk || []
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : optionsErrorMessage)
     }
@@ -43,6 +50,8 @@ export const useRecordHistory = ({
 
   const fetchRecords = async () => {
     loading.value = true
+    listRequestId += 1
+    const currentId = listRequestId
     try {
       const pageData = await listFetcher(
         requestMapper(filters, {
@@ -50,19 +59,18 @@ export const useRecordHistory = ({
           page_size: pagination.pageSize,
         }),
       )
-      records.value = pageData.items
-      pagination.total = pageData.total
+      if (currentId !== listRequestId) return
+      records.value = pageData.items || []
+      pagination.total = pageData.total || 0
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : listErrorMessage)
     } finally {
-      loading.value = false
+      if (currentId === listRequestId) loading.value = false
     }
   }
 
   const reload = async ({ syncOptions = false } = {}) => {
-    if (syncOptions) {
-      await fetchOptions()
-    }
+    if (syncOptions) await fetchOptions()
     await fetchRecords()
   }
 
@@ -70,7 +78,6 @@ export const useRecordHistory = ({
     drawerVisible.value = true
     detailLoading.value = true
     detail.value = null
-
     try {
       detail.value = await detailFetcher(recordId)
     } catch (error) {
@@ -88,9 +95,12 @@ export const useRecordHistory = ({
     await reload({ syncOptions: true })
   }
 
-  const onFilterChanged = async () => {
+  const onFilterChanged = () => {
     pagination.page = 1
-    await reload({ syncOptions: true })
+    if (debounceTimer) window.clearTimeout(debounceTimer)
+    debounceTimer = window.setTimeout(() => {
+      void reload({ syncOptions: true })
+    }, 250)
   }
 
   const onPageChanged = async (nextPage) => {

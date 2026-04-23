@@ -10,8 +10,6 @@ from app.services.alert_service import create_alert
 from app.services.device_service import get_device_by_code
 
 HIGH_RISK_EVENTS = {"飞线充电", "明火", "电池拆卸充电"}
-HIGH_RISK_LEVELS = {"high", "高风险"}
-MEDIUM_RISK_LEVELS = {"medium", "中风险"}
 
 
 def apply_vision_filters(
@@ -28,7 +26,7 @@ def apply_vision_filters(
                 VisionRecord.device_code.ilike(fuzzy_keyword),
                 VisionRecord.location.ilike(fuzzy_keyword),
                 VisionRecord.event_type.ilike(fuzzy_keyword),
-            )
+            ),
         )
     if event_type:
         stmt = stmt.where(VisionRecord.event_type == event_type)
@@ -93,8 +91,7 @@ def get_vision_filter_options(
 
 
 def get_vision_record_by_id(db: Session, record_id: int):
-    stmt = select(VisionRecord).where(VisionRecord.id == record_id)
-    return db.scalar(stmt)
+    return db.scalar(select(VisionRecord).where(VisionRecord.id == record_id))
 
 
 def create_vision_record(db: Session, payload: VisionRecordCreate):
@@ -114,16 +111,18 @@ def create_vision_record(db: Session, payload: VisionRecordCreate):
     db.add(record)
     db.flush()
 
-    if payload.event_type in HIGH_RISK_EVENTS or payload.risk_level in HIGH_RISK_LEVELS | MEDIUM_RISK_LEVELS:
-        level = "high" if payload.event_type in HIGH_RISK_EVENTS or payload.risk_level in HIGH_RISK_LEVELS else "medium"
+    normalized_risk = str(payload.risk_level or "").lower()
+    should_alert = payload.event_type in HIGH_RISK_EVENTS or normalized_risk in {"high", "medium"}
+    if should_alert:
+        alert_level = "high" if payload.event_type in HIGH_RISK_EVENTS or normalized_risk == "high" else "medium"
         create_alert(
             db,
             AlertCreate(
                 alert_type=payload.event_type,
-                alert_level=level,
+                alert_level=alert_level,
                 source_type="vision",
                 location=payload.location,
-                description=f"视觉识别到{payload.event_type}，建议尽快复核处置。",
+                description=f"视觉识别到“{payload.event_type}”，建议尽快复核处置。",
                 device_id=device.id if device else None,
                 occurred_at=record.reported_at,
             ),

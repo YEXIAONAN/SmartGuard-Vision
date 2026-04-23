@@ -21,9 +21,18 @@ class Settings(BaseSettings):
     mysql_database: str = "smartguard_vision"
 
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+
     auth_secret_key: str = "smartguard-vision-change-me"
-    auth_access_token_expire_minutes: int = 720
-    auth_password_salt: str = "smartguard-vision-salt"
+    auth_algorithm: str = "HS256"
+    auth_access_token_expire_minutes: int = 120
+    auth_refresh_token_expire_days: int = 14
+    auth_login_rate_limit: int = 5
+    auth_login_rate_window_minutes: int = 10
+    auth_lock_minutes: int = 5
+
+    default_alert_sla_minutes: int = 30
+    default_sensor_temp_threshold: float = 50.0
+    default_sensor_smoke_threshold: float = 10.0
 
     model_config = SettingsConfigDict(
         env_file=".env",

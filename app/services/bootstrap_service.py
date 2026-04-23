@@ -8,12 +8,15 @@ from app.models.alert_action import AlertActionLog
 from app.models.device import Device
 from app.models.sensor_record import SensorRecord
 from app.models.vision_record import VisionRecord
-from app.services.auth_service import seed_default_users
+from app.services.auth_service import cleanup_expired_auth_tokens, seed_default_users
+from app.services.rule_service import seed_default_rules
 
 
 def seed_initial_data():
     with SessionLocal() as db:
+        cleanup_expired_auth_tokens(db)
         seed_default_users(db)
+        seed_default_rules(db)
 
         device_exists = db.scalar(select(Device.id).limit(1))
         if device_exists:
@@ -23,7 +26,7 @@ def seed_initial_data():
         devices = [
             Device(
                 device_code="CAM-001",
-                device_name="东侧车棚视频监测设备",
+                device_name="东侧车棚视觉监测设备",
                 device_type="camera",
                 location="教学楼东侧集中停放区",
                 status="normal",
@@ -50,9 +53,9 @@ def seed_initial_data():
             ),
             Device(
                 device_code="CAM-002",
-                device_name="地下停放点视频监测设备",
+                device_name="地下停放点视觉监测设备",
                 device_type="camera",
-                location="地下停放点 02",
+                location="地下停放点 A02",
                 status="offline",
                 is_online=False,
                 last_seen_at=now - timedelta(hours=1),
@@ -70,7 +73,7 @@ def seed_initial_data():
                 risk_level="high",
                 confidence=0.96,
                 detected_count=1,
-                payload={"boxes": 2, "remark": "异常接线"},
+                payload={"boxes": 2, "remark": "检测到异常接线"},
                 reported_at=now - timedelta(minutes=8),
             ),
             VisionRecord(
@@ -131,10 +134,10 @@ def seed_initial_data():
                 alert_level="high",
                 source_type="sensor",
                 location=devices[1].location,
-                description="温度与烟雾指标持续偏高，存在热风险。",
+                description="温度与烟雾指标持续偏高，存在热失控风险。",
                 status="processing",
-                handled_by="值班员-王敏",
-                handling_note="已通知现场巡查人员赶赴宿舍区充电棚复核。",
+                handled_by="值班员 王敏",
+                handling_note="已通知现场巡查人员赶往宿舍区充电棚复核。",
                 device_id=devices[1].id,
                 occurred_at=now - timedelta(minutes=5),
             ),
@@ -146,9 +149,10 @@ def seed_initial_data():
                 location=devices[3].location,
                 description="车辆停放越线，占用消防通道边界。",
                 status="resolved",
-                handled_by="管理员-李强",
+                handled_by="管理员 李强",
                 handling_note="现场完成移车，消防通道恢复畅通。",
                 handled_at=now - timedelta(days=1, hours=1, minutes=30),
+                resolved_at=now - timedelta(days=1, hours=1, minutes=30),
                 device_id=devices[3].id,
                 occurred_at=now - timedelta(days=1, hours=2),
             ),
@@ -165,8 +169,8 @@ def seed_initial_data():
                 action_type="status_update",
                 from_status="pending",
                 to_status="processing",
-                handled_by="值班员-王敏",
-                handling_note="已通知现场巡查人员赶赴宿舍区充电棚复核。",
+                handled_by="值班员 王敏",
+                handling_note="已通知现场巡查人员赶往宿舍区充电棚复核。",
                 handled_at=now - timedelta(minutes=4),
                 created_at=now - timedelta(minutes=4),
             ),
@@ -175,7 +179,7 @@ def seed_initial_data():
                 action_type="status_update",
                 from_status="processing",
                 to_status="resolved",
-                handled_by="管理员-李强",
+                handled_by="管理员 李强",
                 handling_note="现场完成移车，消防通道恢复畅通。",
                 handled_at=now - timedelta(days=1, hours=1, minutes=30),
                 created_at=now - timedelta(days=1, hours=1, minutes=30),

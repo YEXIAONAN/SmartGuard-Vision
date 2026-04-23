@@ -44,6 +44,26 @@ export const routes = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'rules',
+        name: 'rules',
+        component: () => import('../views/system/RuleCenterView.vue'),
+        meta: {
+          title: '规则中心',
+          requiresAuth: true,
+          roles: ['admin', 'operator'],
+        },
+      },
+      {
+        path: 'audit',
+        name: 'audit',
+        component: () => import('../views/system/AuditCenterView.vue'),
+        meta: {
+          title: '审计中心',
+          requiresAuth: true,
+          roles: ['admin'],
+        },
+      },
     ],
   },
 ]

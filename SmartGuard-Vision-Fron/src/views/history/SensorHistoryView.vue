@@ -57,12 +57,7 @@ onMounted(async () => {
             :value="option"
           />
         </el-select>
-        <el-select
-          v-model="history.filters.riskLevel"
-          clearable
-          placeholder="风险等级"
-          @change="history.onFilterChanged"
-        >
+        <el-select v-model="history.filters.riskLevel" clearable placeholder="风险等级" @change="history.onFilterChanged">
           <el-option
             v-for="option in history.filterOptions.risk"
             :key="option"

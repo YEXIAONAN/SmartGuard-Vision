@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -16,6 +15,10 @@ class AlertBase(BaseModel):
     handled_by: str | None = None
     handling_note: str | None = None
     handled_at: datetime | None = None
+    first_response_at: datetime | None = None
+    resolved_at: datetime | None = None
+    sla_due_at: datetime | None = None
+    escalated_at: datetime | None = None
     device_id: int | None = None
 
 

@@ -17,6 +17,9 @@ class DashboardStats(BaseModel):
     charging_device_count: int
     abnormal_charging_event_count: int
     over_temperature_event_count: int
+    sla_overdue_count: int
+    average_response_minutes: int
+    average_resolution_minutes: int
 
 
 class DashboardTrendItem(BaseModel):

@@ -19,10 +19,7 @@ export const useDashboardStore = defineStore('dashboard', {
       if (!silent) this.loading = true
 
       try {
-        const [health, overview] = await Promise.all([
-          dashboardApi.getHealth(),
-          dashboardApi.getOverview(),
-        ])
+        const [health, overview] = await Promise.all([dashboardApi.getHealth(), dashboardApi.getOverview()])
         this.$patch(adaptDashboardData({ health, overview }))
       } catch (error) {
         this.systemStatus = '连接异常'

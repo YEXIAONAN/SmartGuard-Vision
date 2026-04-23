@@ -18,12 +18,12 @@ from app.schemas.dashboard import (
     DashboardStats,
     DashboardTrendItem,
 )
-from app.services.alert_service import list_alerts
+from app.services.alert_service import list_alerts, scan_and_escalate_overdue_alerts
 
 HIGH_RISK_LEVELS = {"high", "高风险"}
 MEDIUM_RISK_LEVELS = {"medium", "中风险"}
 DEVICE_TYPE_LABELS = {
-    "camera": "视频监测设备",
+    "camera": "视觉监测设备",
     "sensor": "传感设备",
     "charger": "充电终端",
 }
@@ -66,7 +66,15 @@ def device_type_label(value: str | None) -> str:
     return DEVICE_TYPE_LABELS.get(str(value or "").strip().lower(), str(value or "其他设备"))
 
 
+def _average_minutes(values: list[float]) -> int:
+    if not values:
+        return 0
+    return int(round(sum(values) / len(values)))
+
+
 def get_dashboard_overview(db: Session) -> DashboardOverview:
+    scan_and_escalate_overdue_alerts(db)
+
     now = datetime.now()
     today_start = datetime(now.year, now.month, now.day)
 
@@ -75,9 +83,7 @@ def get_dashboard_overview(db: Session) -> DashboardOverview:
     offline_device_count = device_count - online_device_count
     alert_count = db.scalar(select(func.count(Alert.id))) or 0
     today_alert_count = db.scalar(select(func.count(Alert.id)).where(Alert.occurred_at >= today_start)) or 0
-    high_risk_alert_count = (
-        db.scalar(select(func.count(Alert.id)).where(Alert.alert_level.in_(["high", "高风险"]))) or 0
-    )
+    high_risk_alert_count = db.scalar(select(func.count(Alert.id)).where(Alert.alert_level.in_(["high", "高风险"]))) or 0
     vision_record_count = db.scalar(select(func.count(VisionRecord.id))) or 0
     sensor_record_count = db.scalar(select(func.count(SensorRecord.id))) or 0
 
@@ -87,7 +93,9 @@ def get_dashboard_overview(db: Session) -> DashboardOverview:
     all_vision_records = db.scalars(select(VisionRecord).order_by(VisionRecord.reported_at.desc())).all()
 
     charging_sensor_records = [
-        record for record in all_sensor_records if isinstance(record.payload, dict) and record.payload.get("power_state") == "charging"
+        record
+        for record in all_sensor_records
+        if isinstance(record.payload, dict) and record.payload.get("power_state") == "charging"
     ]
     charging_device_count = len({record.device_code for record in charging_sensor_records if record.device_code})
     abnormal_charging_event_count = sum(
@@ -108,11 +116,9 @@ def get_dashboard_overview(db: Session) -> DashboardOverview:
     )
 
     risk_rows = db.execute(
-        select(Alert.alert_level, func.count(Alert.id)).group_by(Alert.alert_level).order_by(func.count(Alert.id).desc())
+        select(Alert.alert_level, func.count(Alert.id)).group_by(Alert.alert_level).order_by(func.count(Alert.id).desc()),
     ).all()
-    risk_distribution = [
-        DashboardRiskDistributionItem(level=level, count=count) for level, count in risk_rows
-    ]
+    risk_distribution = [DashboardRiskDistributionItem(level=level, count=count) for level, count in risk_rows]
 
     daily_totals = defaultdict(lambda: {"total": 0, "high": 0})
     start_day = today_start - timedelta(days=6)
@@ -133,7 +139,7 @@ def get_dashboard_overview(db: Session) -> DashboardOverview:
                 date=key,
                 total_alerts=counts["total"],
                 high_risk_alerts=counts["high"],
-            )
+            ),
         )
 
     event_distribution = [
@@ -153,7 +159,7 @@ def get_dashboard_overview(db: Session) -> DashboardOverview:
                 name=device_type_label(device_type),
                 online=online,
                 total=count,
-            )
+            ),
         )
 
     latest_alert = all_alerts[0] if all_alerts else None
@@ -214,7 +220,22 @@ def get_dashboard_overview(db: Session) -> DashboardOverview:
         ],
     )
 
-    recent_alerts = list_alerts(db, limit=5)
+    recent_alerts, _ = list_alerts(db, page=1, page_size=5)
+    sla_overdue_count = sum(
+        1
+        for item in all_alerts
+        if item.status != "resolved" and item.sla_due_at is not None and item.sla_due_at < now
+    )
+    response_durations = [
+        (item.first_response_at - item.occurred_at).total_seconds() / 60
+        for item in all_alerts
+        if item.first_response_at and item.occurred_at
+    ]
+    resolution_durations = [
+        (item.resolved_at - item.occurred_at).total_seconds() / 60
+        for item in all_alerts
+        if item.resolved_at and item.occurred_at
+    ]
 
     return DashboardOverview(
         project_name="智感护航——面向停充场景的多模态安全感知平台",
@@ -231,6 +252,9 @@ def get_dashboard_overview(db: Session) -> DashboardOverview:
             charging_device_count=charging_device_count,
             abnormal_charging_event_count=abnormal_charging_event_count,
             over_temperature_event_count=over_temperature_event_count,
+            sla_overdue_count=sla_overdue_count,
+            average_response_minutes=_average_minutes(response_durations),
+            average_resolution_minutes=_average_minutes(resolution_durations),
         ),
         risk_distribution=risk_distribution,
         seven_day_alert_trend=seven_day_alert_trend,

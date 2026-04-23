@@ -44,12 +44,7 @@ onMounted(async () => {
           placeholder="搜索设备编码、位置或事件类型"
           @change="history.onFilterChanged"
         />
-        <el-select
-          v-model="history.filters.eventType"
-          clearable
-          placeholder="事件类型"
-          @change="history.onFilterChanged"
-        >
+        <el-select v-model="history.filters.eventType" clearable placeholder="事件类型" @change="history.onFilterChanged">
           <el-option
             v-for="option in history.filterOptions.first"
             :key="option"
@@ -57,12 +52,7 @@ onMounted(async () => {
             :value="option"
           />
         </el-select>
-        <el-select
-          v-model="history.filters.riskLevel"
-          clearable
-          placeholder="风险等级"
-          @change="history.onFilterChanged"
-        >
+        <el-select v-model="history.filters.riskLevel" clearable placeholder="风险等级" @change="history.onFilterChanged">
           <el-option
             v-for="option in history.filterOptions.risk"
             :key="option"
