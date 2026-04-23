@@ -1,109 +1,74 @@
 # 智感护航（SmartGuard-Vision）
 
-面向电动自行车停放与充电场景的多模态安全感知与联动处置平台。  
-技术栈：`FastAPI + SQLAlchemy + Vue 3 + Vite + Element Plus + ECharts`
+智感护航是一个面向电动自行车停放与充电场景的多模态安全感知与联动处置系统，覆盖“风险发现、告警分级、处置流转、审计留痕、历史追溯”的完整闭环。  
+项目由 **FastAPI 后端** 与 **Vue 3 前端** 两部分组成，适用于校园、社区、园区、地下车库、集中充电区等安全治理场景。
 
-## 1. 已完成的高价值优化
+## 项目要解决的痛点
 
-### 1.1 认证与权限（RBAC + 安全加固）
+- 监测数据分散：视觉识别、传感器上报、设备状态分散在不同系统，无法统一查看。
+- 告警处置断层：告警触发后缺少标准化处置流转，处理人、备注、时间不可追踪。
+- 风险判断滞后：缺乏首页态势汇总与趋势分析，值班人员难以快速定位高风险事件。
+- 追责依据不足：缺少审计日志与处置操作记录，无法形成可核查的过程证据。
 
-- 用户登录：`POST /api/auth/login`
-- Token 刷新：`POST /api/auth/refresh`
-- 退出登录：`POST /api/auth/logout`
-- 当前用户：`GET /api/auth/me`
-- 角色模型：`admin / operator / viewer`
-- 安全机制：
-  - bcrypt 密码哈希
-  - JWT 访问令牌（含 jti）
-  - 刷新令牌持久化与轮换
-  - 访问令牌撤销表（logout 后失效）
-  - 登录失败限流与短时锁定
+## 核心能力
 
-### 1.2 数据与流程能力增强
+- 多角色登录认证（admin / operator / viewer）与会话管理（access/refresh token）
+- 首页态势总览（在线设备、告警统计、高风险事件、SLA 超时、平均处置时长）
+- 告警管理（列表筛选、状态流转、处置审计、CSV 导出）
+- 视觉历史与传感历史（服务端分页 + 条件联动筛选 + 详情查看）
+- 规则中心（SLA 与阈值可配置）
+- 审计中心（关键操作留痕）
+- 前端自动轮询刷新，风险详情与设备高亮联动
 
-- 历史页：服务端分页 + 条件联动筛选
-- 告警处置：必填校验 + 审计时间线闭环
-- SLA 能力：
-  - 告警 `sla_due_at` 字段
-  - 超时扫描与自动升级
-  - 首页展示 `SLA超时数 / 平均响应时长 / 平均处置时长`
-- 告警导出：`GET /api/alerts/export/csv`
+## 技术架构
 
-### 1.3 规则配置中心
+- 后端：FastAPI、SQLAlchemy、Alembic、Passlib、JWT
+- 前端：Vue 3、Vite、Pinia、Vue Router、Element Plus、ECharts、Axios、TypeScript
+- 数据库：默认 SQLite（可扩展 MySQL）
 
-- 规则读取：`GET /api/rules`
-- 规则更新：`PUT /api/rules/{rule_key}`
-- 默认规则：
-  - `alert_sla_minutes`
-  - `sensor_temp_threshold`
-  - `sensor_smoke_threshold`
-
-### 1.4 审计中心
-
-- 审计日志查询：`GET /api/audit`
-- 目前覆盖：
-  - 登录/退出
-  - 告警状态更新
-  - SLA 扫描
-  - 规则更新
-  - 数据导出
-
-### 1.5 前端优化
-
-- 乱码清理与 UTF-8 文案统一
-- 登录态接入 refresh token 自动续签
-- 路由守卫（未登录拦截 + 角色路由限制）
-- 首页补“导出告警 CSV / SLA 扫描”操作
-- 新增页面：
-  - 规则中心 `/rules`
-  - 审计中心 `/audit`
-- 性能优化：
-  - Vite `manualChunks` 拆分（vue / element-plus / echarts）
-  - 历史页筛选请求防抖与并发覆盖保护
-
-## 2. 默认账号
-
-- 管理员：`admin / admin123`
-- 值班员：`operator / operator123`
-- 只读用户：`viewer / viewer123`
-
-## 3. 项目结构
+## 项目结构
 
 ```text
 SmartGuard-Vision/
-├─ app/
-│  ├─ api/routes/                # auth/alerts/dashboard/devices/vision/sensors/rules/audit
-│  ├─ core/                      # config/database/security
-│  ├─ models/                    # 业务模型 + auth token + audit + rule
-│  ├─ schemas/                   # pydantic schema
-│  └─ services/                  # 业务逻辑
-├─ SmartGuard-Vision-Fron/
+├─ app/                          # FastAPI 后端
+│  ├─ api/routes/                # auth/dashboard/alerts/devices/vision/sensors/rules/audit
+│  ├─ core/                      # 配置、数据库、鉴权基础能力
+│  ├─ models/                    # 数据模型
+│  ├─ schemas/                   # Pydantic Schema
+│  └─ services/                  # 业务服务层
+├─ SmartGuard-Vision-Fron/       # Vue 前端
 │  └─ src/
-│     ├─ views/auth              # 登录页
-│     ├─ views/dashboard         # 首页
-│     ├─ views/history           # 视觉/传感历史
-│     └─ views/system            # 规则中心/审计中心
+├─ alembic/                      # 数据库迁移
 ├─ tests/                        # 后端测试
-├─ .github/workflows/ci.yml      # CI
-└─ alembic/                      # 迁移脚手架
+├─ docker/                       # Dockerfile
+├─ docker-compose.yml
+├─ start-all.bat
+├─ start-all.ps1
+└─ start-all.sh
 ```
 
-## 4. 本地启动
+## 快速启动
 
-### 4.1 环境要求
+### 1) 环境要求
 
 - Python 3.11+
-- `uv`
+- [uv](https://docs.astral.sh/uv/)
 - Node.js 20+
+- npm 10+
 
-### 4.2 后端
+### 2) 启动后端（根目录）
 
 ```bash
 uv sync --group dev
 uv run uvicorn app.main:app --reload
 ```
 
-### 4.3 前端
+后端默认地址：
+
+- API：`http://127.0.0.1:8000`
+- 文档：`http://127.0.0.1:8000/docs`
+
+### 3) 启动前端（新终端）
 
 ```bash
 cd SmartGuard-Vision-Fron
@@ -111,24 +76,46 @@ npm install
 npm run dev
 ```
 
-默认访问：
+前端默认地址：`http://127.0.0.1:5173`
 
-- 前端：`http://127.0.0.1:5173`
-- 后端：`http://127.0.0.1:8000`
-- Swagger：`http://127.0.0.1:8000/docs`
+> 前端开发代理默认转发到 `http://127.0.0.1:8000`。
 
-## 5. 一键脚本与 Docker
+## 一键启动脚本
 
 - Windows CMD：`start-all.bat`
 - Windows PowerShell：`start-all.ps1`
 - macOS/Linux：`start-all.sh`
+
+## Docker 启动
 
 ```bash
 docker compose up --build
 docker compose down
 ```
 
-## 6. 测试与质量
+## 默认账号
+
+- 管理员：`admin / admin123`
+- 值班员：`operator / operator123`
+- 只读用户：`viewer / viewer123`
+
+## 常用后端接口
+
+- `GET /health`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/dashboard/overview`
+- `GET /api/devices`
+- `GET /api/alerts`
+- `PATCH /api/alerts/{alert_id}/status`
+- `GET /api/vision`
+- `GET /api/sensors`
+- `GET /api/rules`
+- `GET /api/audit`
+
+## 测试与构建
 
 ### 后端测试
 
@@ -144,28 +131,10 @@ npm run test
 npm run build
 ```
 
-### CI
+## 使用限制（重要）
 
-- GitHub Actions 自动执行：
-  - 后端测试
-  - 前端测试
-  - 前端构建
+**本项目未经允许，禁止将其二次开发，用作展示项目，即使是非盈利活动展示也不允许。**
 
-## 7. 数据库迁移（Alembic）
+## 许可证
 
-首次可用命令：
-
-```bash
-uv run alembic upgrade head
-```
-
-新增迁移：
-
-```bash
-uv run alembic revision --autogenerate -m "your message"
-uv run alembic upgrade head
-```
-
-## 8. 许可说明
-
-未经授权，禁止将本项目用于竞赛提交或商业用途。
+本项目采用仓库根目录下的 [`LICENSE`](./LICENSE)（`Proprietary / All Rights Reserved`）授权条款。
