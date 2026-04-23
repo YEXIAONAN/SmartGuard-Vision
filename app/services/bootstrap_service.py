@@ -8,10 +8,13 @@ from app.models.alert_action import AlertActionLog
 from app.models.device import Device
 from app.models.sensor_record import SensorRecord
 from app.models.vision_record import VisionRecord
+from app.services.auth_service import seed_default_users
 
 
 def seed_initial_data():
     with SessionLocal() as db:
+        seed_default_users(db)
+
         device_exists = db.scalar(select(Device.id).limit(1))
         if device_exists:
             return

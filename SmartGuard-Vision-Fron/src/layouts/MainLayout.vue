@@ -1,11 +1,16 @@
 <script setup>
+import { ElMessage } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useClock } from '../composables/useClock'
+import { authApi } from '../services/api'
+import { useAuthStore } from '../stores/auth'
 import { useDashboardStore } from '../stores/dashboard'
 
 const route = useRoute()
+const router = useRouter()
 const dashboardStore = useDashboardStore()
+const authStore = useAuthStore()
 const { currentTime } = useClock()
 
 const navItems = [
@@ -14,7 +19,14 @@ const navItems = [
   { path: '/sensor-history', label: '传感历史' },
 ]
 
+const roleLabelMap = {
+  admin: '管理员',
+  operator: '值班员',
+  viewer: '只读用户',
+}
+
 const activePath = computed(() => route.path)
+const roleLabel = computed(() => roleLabelMap[authStore.role] || authStore.role || '--')
 const systemStateClass = computed(() =>
   dashboardStore.systemStatus.includes('正常') ? 'state-ok' : 'state-danger',
 )
@@ -22,10 +34,26 @@ const systemStateClass = computed(() =>
 const headerRefreshInterval = 60000
 let timerId = null
 
-onMounted(() => {
+const logout = async () => {
+  authStore.clearSession()
+  dashboardStore.stopAutoRefresh()
+  await router.replace('/login')
+  ElMessage.success('已退出登录')
+}
+
+onMounted(async () => {
+  try {
+    const me = await authApi.getMe()
+    authStore.setSession({ token: authStore.token, user: me })
+  } catch {
+    await logout()
+    return
+  }
+
   if (!dashboardStore.initialized) {
     void dashboardStore.fetchDashboard()
   }
+
   timerId = window.setInterval(() => {
     void dashboardStore.fetchDashboard({ silent: true })
   }, headerRefreshInterval)
@@ -69,6 +97,14 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <div class="console-user">
+        <div class="user-line">
+          <span class="user-name">{{ authStore.displayName }}</span>
+          <el-tag type="info" effect="plain" size="small">{{ roleLabel }}</el-tag>
+        </div>
+        <el-button link type="primary" @click="logout">退出登录</el-button>
+      </div>
+
       <nav class="console-tabs">
         <router-link
           v-for="item in navItems"
@@ -98,8 +134,8 @@ onBeforeUnmount(() => {
   top: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: 1.15fr 1fr auto;
-  gap: 16px;
+  grid-template-columns: 1.05fr 1fr auto;
+  gap: 14px;
   align-items: center;
   padding: 10px 20px;
   background: #f3f6fa;
@@ -107,7 +143,7 @@ onBeforeUnmount(() => {
 }
 
 .brand-title {
-  font-size: 21px;
+  font-size: 20px;
   line-height: 1;
   font-weight: 700;
   color: #1f2f42;
@@ -162,7 +198,27 @@ onBeforeUnmount(() => {
   background: var(--sg-color-danger);
 }
 
+.console-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.user-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d4259;
+}
+
 .console-tabs {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   border: 1px solid #d1dbe7;
@@ -190,7 +246,7 @@ onBeforeUnmount(() => {
 }
 
 .app-main {
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 120px);
 }
 
 @media (max-width: 1366px) {
@@ -199,8 +255,8 @@ onBeforeUnmount(() => {
     align-items: stretch;
   }
 
-  .console-tabs {
-    width: fit-content;
+  .console-user {
+    justify-self: start;
   }
 }
 

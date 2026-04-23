@@ -1,6 +1,6 @@
 <script setup>
 import { ElMessage } from 'element-plus'
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import PanelCard from '../../components/common/PanelCard.vue'
 import DashboardAlertList from '../../components/dashboard/DashboardAlertList.vue'
 import DashboardChartPanel from '../../components/dashboard/DashboardChartPanel.vue'
@@ -8,6 +8,7 @@ import DashboardDeviceStatus from '../../components/dashboard/DashboardDeviceSta
 import DashboardMonitor from '../../components/dashboard/DashboardMonitor.vue'
 import DashboardStats from '../../components/dashboard/DashboardStats.vue'
 import { dashboardApi } from '../../services/api'
+import { useAuthStore } from '../../stores/auth'
 import { useDashboardStore } from '../../stores/dashboard'
 import {
   createAlertTrendOption,
@@ -18,6 +19,7 @@ import {
 } from './chart-options'
 
 const dashboardStore = useDashboardStore()
+const authStore = useAuthStore()
 
 const handlingDialogVisible = ref(false)
 const handlingTarget = ref(null)
@@ -49,6 +51,7 @@ const riskLevelOption = computed(() => createRiskLevelOption(dashboardStore.risk
 const areaRiskOption = computed(() => createAreaRiskOption(dashboardStore.areaRisk))
 const alertTrendOption = computed(() => createAlertTrendOption(dashboardStore.alertTrend))
 const currentAlert = computed(() => dashboardStore.alerts[0] || null)
+
 const riskTagClass = (levelKey) =>
   `sg-status-tag-risk-${['high', 'medium', 'low'].includes(levelKey) ? levelKey : 'low'}`
 const stateTagClass = (statusKey) =>
@@ -68,6 +71,8 @@ const loadActionLogs = async (alertId) => {
 }
 
 const openHandlingDialog = async ({ alert, nextStatus }) => {
+  if (!authStore.canHandleAlerts) return
+
   handlingTarget.value = alert
   handlingForm.status = nextStatus
   handlingForm.handledBy = alert.handledBy || ''
@@ -187,6 +192,7 @@ onMounted(() => {
           <DashboardAlertList
             :alerts="dashboardStore.alerts"
             :updating-alert-id="dashboardStore.updatingAlertId"
+            :can-handle="authStore.canHandleAlerts"
             @handle-alert="openHandlingDialog"
           />
         </PanelCard>

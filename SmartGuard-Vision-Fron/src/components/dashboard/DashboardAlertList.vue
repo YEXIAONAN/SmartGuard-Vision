@@ -8,6 +8,10 @@ defineProps({
     type: Number,
     default: null,
   },
+  canHandle: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['handle-alert'])
@@ -59,7 +63,7 @@ const openHandlingDialog = (alert, nextStatus) => {
           </span>
         </div>
 
-        <footer v-if="item.rawStatus !== 'resolved'" class="alert-actions">
+        <footer v-if="canHandle && item.rawStatus !== 'resolved'" class="alert-actions">
           <el-button
             v-if="item.rawStatus === 'pending'"
             size="small"

@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     mysql_database: str = "smartguard_vision"
 
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+    auth_secret_key: str = "smartguard-vision-change-me"
+    auth_access_token_expire_minutes: int = 720
+    auth_password_salt: str = "smartguard-vision-salt"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_user, get_db
 from app.schemas.device import DeviceRead
 from app.schemas.response import ApiResponse
 from app.services.device_service import list_devices
@@ -15,6 +15,7 @@ def get_devices(
     online_only: bool = Query(default=False, description="是否仅返回在线设备"),
     limit: int = Query(default=50, ge=1, le=200, description="返回条数"),
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),
 ):
     devices = list_devices(db, online_only=online_only, limit=limit)
     return success_response(data=devices)

@@ -1,4 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const TOKEN_KEY = 'sg_access_token'
+const USER_KEY = 'sg_current_user'
 
 const buildUrl = (path, params) => {
   const url = new URL(`${API_BASE_URL}${path}`, window.location.origin)
@@ -18,15 +20,37 @@ const buildUrl = (path, params) => {
   return url.toString()
 }
 
+const getAccessToken = () => localStorage.getItem(TOKEN_KEY) || ''
+
+const clearSessionAndRedirect = () => {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(USER_KEY)
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login'
+  }
+}
+
 const request = async (path, options = {}) => {
-  const { params, headers, ...restOptions } = options
+  const { params, headers, skipAuth, ...restOptions } = options
+  const token = getAccessToken()
+
+  const finalHeaders = {
+    Accept: 'application/json',
+    ...headers,
+  }
+  if (!skipAuth && token) {
+    finalHeaders.Authorization = `Bearer ${token}`
+  }
+
   const response = await fetch(buildUrl(path, params), {
-    headers: {
-      Accept: 'application/json',
-      ...headers,
-    },
+    headers: finalHeaders,
     ...restOptions,
   })
+
+  if (response.status === 401 && !skipAuth) {
+    clearSessionAndRedirect()
+    throw new Error('登录状态已失效，请重新登录')
+  }
 
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`)
@@ -40,9 +64,23 @@ const request = async (path, options = {}) => {
   return payload.data
 }
 
+export const authApi = {
+  login(payload) {
+    return request('/api/auth/login', {
+      method: 'POST',
+      skipAuth: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+  },
+  getMe() {
+    return request('/api/auth/me')
+  },
+}
+
 export const dashboardApi = {
   getHealth() {
-    return request('/health')
+    return request('/health', { skipAuth: true })
   },
   getOverview() {
     return request('/api/dashboard/overview')

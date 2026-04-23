@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import { routes } from './routes'
 
 const router = createRouter({
@@ -6,9 +7,25 @@ const router = createRouter({
   routes,
 })
 
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+  const requiresAuth = Boolean(to.meta?.requiresAuth)
+  const guestOnly = Boolean(to.meta?.guestOnly)
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (guestOnly && authStore.isAuthenticated) {
+    return { name: 'dashboard' }
+  }
+
+  return true
+})
+
 router.afterEach((to) => {
-  const title = to.meta?.title ? `${to.meta.title} - 智感护航` : '智感护航'
-  document.title = title
+  const baseTitle = '智感护航'
+  document.title = to.meta?.title ? `${to.meta.title} - ${baseTitle}` : baseTitle
 })
 
 export default router

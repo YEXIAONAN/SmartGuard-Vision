@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
-from app.schemas.alert_action import AlertActionRead
+from app.api.deps import get_current_user, get_db, require_roles
 from app.schemas.alert import AlertRead, AlertStatusUpdate
+from app.schemas.alert_action import AlertActionRead
 from app.schemas.response import ApiResponse
 from app.services.alert_service import list_alert_action_logs, list_alerts, update_alert_status
 from app.utils.response import success_response
@@ -17,6 +17,7 @@ def get_alerts(
     status: str | None = Query(default=None, description="处置状态过滤"),
     limit: int = Query(default=20, ge=1, le=100, description="返回条数"),
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),
 ):
     alerts = list_alerts(db, level=level, status=status, limit=limit)
     return success_response(data=alerts)
@@ -27,6 +28,7 @@ def patch_alert_status(
     payload: AlertStatusUpdate,
     alert_id: int = Path(..., ge=1, description="告警 ID"),
     db: Session = Depends(get_db),
+    _: object = Depends(require_roles("admin", "operator")),
 ):
     if payload.status in {"processing", "resolved"}:
         if not payload.handled_by or not payload.handled_by.strip():
@@ -51,6 +53,7 @@ def patch_alert_status(
 def get_alert_actions(
     alert_id: int = Path(..., ge=1, description="告警 ID"),
     db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),
 ):
     logs = list_alert_action_logs(db, alert_id=alert_id)
     return success_response(data=logs)
